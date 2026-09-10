@@ -1,4 +1,7 @@
+import Link from 'next/link'
 import AuthForm from './AuthForm'
+import Backdrop from '@/components/nx/Backdrop'
+import Marquee from '@/components/nx/Marquee'
 
 export default async function LoginPage({
   searchParams,
@@ -8,19 +11,50 @@ export default async function LoginPage({
   const { error } = await searchParams
 
   return (
-    <div className="min-h-screen bg-[#050505] flex items-center justify-center p-4">
-      {/* Background Noise */}
-      <div className="fixed inset-0 z-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-screen pointer-events-none"></div>
-      
-      <div className="relative z-10 w-full max-w-md p-8 bg-black/50 border border-white/10 backdrop-blur-xl">
-        
-        <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold uppercase tracking-widest text-white mb-2">NEXUS<span className="text-[#00ffff]">_OS</span></h1>
-          <p className="text-[10px] uppercase tracking-widest text-white/50">Authenticate to access Core</p>
-        </div>
+    <div className="relative flex min-h-screen flex-col overflow-x-hidden bg-ink text-white selection:bg-acid selection:text-black">
+      <Backdrop />
 
-        <AuthForm error={error} />
-      </div>
+      <p
+        aria-hidden
+        className="pointer-events-none absolute -bottom-[6vw] left-0 z-0 select-none text-[26vw] font-black uppercase leading-[0.7] tracking-[-0.05em] nx-outline-text"
+      >
+        Nexus
+      </p>
+
+      <header className="relative z-10 flex items-center justify-between px-6 py-6">
+        <Link href="/" className="flex items-baseline gap-3">
+          <span className="text-xl font-black uppercase tracking-[-0.03em]">Nexus</span>
+          <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-acid">Core</span>
+        </Link>
+        <Link
+          href="/"
+          className="font-mono text-[10px] uppercase tracking-[0.25em] text-white/40 transition-colors hover:text-white"
+        >
+          ← Trang chủ
+        </Link>
+      </header>
+
+      <main className="relative z-10 flex flex-1 items-center justify-center px-6 py-12">
+        <div className="w-full max-w-[420px]">
+          <p className="font-mono text-[10px] uppercase tracking-[0.35em] text-acid">
+            00 // Xác thực
+          </p>
+          <h1 className="mt-5 text-6xl font-black uppercase leading-[1] tracking-[-0.04em]">
+            Đăng
+            <br />
+            <span className="text-acid">nhập</span>
+          </h1>
+
+          <div className="mt-10 border border-white/10 bg-ink-panel/80 p-8 backdrop-blur-xl">
+            <AuthForm error={error} />
+          </div>
+        </div>
+      </main>
+
+      <Marquee
+        text="AI BATCH GENERATION · GIỮ MẶT · GIỮ PHONG CÁCH ·"
+        className="relative z-10 border-t border-white/10 py-3 font-mono text-[11px] uppercase tracking-[0.3em] text-white/20"
+      />
     </div>
   )
 }
