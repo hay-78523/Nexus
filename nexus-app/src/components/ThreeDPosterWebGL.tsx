@@ -79,7 +79,7 @@ export default function ThreeDPosterWebGL() {
         <directionalLight position={[10, -5, -5]} intensity={5} color="#ccff00" />
 
         {/* Sử dụng HDRI Preset "city" để mô hình kim loại phản chiếu chân thực 360 độ */}
-        <Environment preset="city" resolution={512}>
+        <Environment files="/hdri/potsdamer_platz_1k.hdr" resolution={512}>
           <group rotation={[-Math.PI / 3, 0, 1]}>
             <Lightformer form="circle" intensity={5} rotation-x={Math.PI / 2} position={[0, 5, -9]} scale={2} />
             <Lightformer form="rect" intensity={2} rotation-y={Math.PI / 2} position={[-5, 1, -1]} scale={10} />
