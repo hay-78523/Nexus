@@ -1,36 +1,66 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Nexus App
 
-## Getting Started
+Web app của **NEXUS** — nền tảng AI Batch Generation (xem `../Bao_Cao_AI_Flow.md` cho bản kiến trúc tổng thể).
 
-First, run the development server:
+## Stack
+
+| Lớp | Công nghệ |
+|---|---|
+| Framework | Next.js 16 (App Router, Turbopack) + React 19 |
+| Giao diện | Tailwind CSS v4 + shadcn/ui |
+| 3D | three.js + @react-three/fiber / drei / postprocessing |
+| Auth & DB | Supabase (`@supabase/ssr`) |
+| AI Engine | Fal.ai hoặc Replicate — **chưa nối** |
+
+## Chạy local
 
 ```bash
+npm install
+cp .env.example .env.local   # rồi điền key Supabase vào
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Mở http://localhost:3000.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Biến môi trường
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Xem `.env.example`. Bắt buộc phải có `NEXT_PUBLIC_SUPABASE_URL` và
+`NEXT_PUBLIC_SUPABASE_ANON_KEY`, nếu không middleware sẽ crash ở mọi request.
 
-## Learn More
+## Cấu trúc
 
-To learn more about Next.js, take a look at the following resources:
+```
+src/
+├── app/
+│   ├── page.tsx                  Landing 3D
+│   ├── auth/                     Đăng nhập / đăng ký / Google OAuth
+│   ├── dashboard/                Khu vực người dùng + module AI
+│   ├── dashboard/admin/          Admin hub + danh sách user
+│   └── api/generate/route.ts     Endpoint sinh ảnh (đang trả 501)
+├── components/                   AIGenerator, 3D, shadcn ui/
+├── utils/supabase/               client / server / middleware
+└── middleware.ts                 Bảo vệ route + phân quyền admin
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Phân quyền
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+`src/middleware.ts` chạy trên `/dashboard/*` và `/auth/*`:
 
-## Deploy on Vercel
+1. Chưa đăng nhập mà vào `/dashboard` → đá về `/auth`
+2. Đã đăng nhập mà vào `/auth` → đá về `/dashboard`
+3. Vào `/dashboard/admin` → phải có `profiles.role = 'admin'`
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+> **Quan trọng:** phân quyền dựa hoàn toàn vào cột `role` của bảng `profiles`
+> trên Supabase. Phải bật RLS và chặn user tự `UPDATE` cột `role` của chính
+> mình, nếu không ai cũng tự nâng được lên admin. Schema/RLS hiện **chưa có**
+> trong repo.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Việc còn dang dở
+
+- [ ] Nối Fal.ai / Replicate vào `/api/generate` (hiện trả về 501)
+- [ ] Batch generation — hiện `AIGenerator` mới chạy 1 ảnh/lượt, chưa có hàng đợi
+- [ ] IP-Adapter FaceID (giữ mặt) và Style Reference (giữ phong cách)
+- [ ] SQL migration + RLS policy cho bảng `profiles`
+- [ ] Thiếu ảnh `public/cyber_head_bg.jpg` mà `dashboard/page.tsx` đang trỏ tới
+- [ ] `src/lib/utils.ts` đang dùng package `cn`, nên đổi sang `clsx` + `tailwind-merge` chuẩn shadcn
+- [ ] Next 16 báo `middleware.ts` đã deprecated, cần migrate sang `proxy.ts`

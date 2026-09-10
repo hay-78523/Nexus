@@ -3,7 +3,7 @@
 import { useRef, useState, useEffect } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Environment, Lightformer, Float, ContactShadows, useGLTF } from "@react-three/drei";
-import { EffectComposer, Bloom, Vignette, DepthOfField } from "@react-three/postprocessing";
+import { EffectComposer, Bloom, Vignette } from "@react-three/postprocessing";
 import * as THREE from "three";
 
 function CharacterModel() {
@@ -101,7 +101,7 @@ export default function ThreeDPosterWebGL() {
         />
 
         {/* POST-PROCESSING: Sắc nét tối đa (multisampling=8), Bỏ Depth of Field để tránh bị mờ viền */}
-        <EffectComposer disableNormalPass multisampling={8}>
+        <EffectComposer enableNormalPass={false} multisampling={8}>
           <Bloom luminanceThreshold={0.8} mipmapBlur intensity={0.8} />
           <Vignette eskil={false} offset={0.1} darkness={1.1} />
         </EffectComposer>

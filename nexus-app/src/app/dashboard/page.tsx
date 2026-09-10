@@ -26,6 +26,7 @@ export default async function DashboardPage() {
       
       {/* BACKGROUND IMAGE (Absolute, cover full height, object-cover) */}
       <div className="fixed inset-0 z-0 opacity-80 pointer-events-none flex justify-center items-center mix-blend-multiply">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img 
           src="/cyber_head_bg.jpg" 
           alt="Cyber Head Background" 
@@ -63,7 +64,7 @@ export default async function DashboardPage() {
           <div className="bg-black text-[#ccff00] border-4 border-black shadow-[12px_12px_0_0_rgba(0,0,0,1)] p-6 rotate-[-2deg] hover:rotate-0 transition-transform">
             <h1 className="text-6xl font-black uppercase tracking-tighter mb-2">NEXUS<br/>CORE</h1>
             <p className="font-mono text-sm uppercase tracking-widest bg-[#ccff00] text-black inline-block px-2 py-1 font-bold">
-              // SYSTEM OVERRIDE
+              {'// SYSTEM OVERRIDE'}
             </p>
           </div>
 

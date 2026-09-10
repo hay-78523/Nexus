@@ -1,6 +1,5 @@
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import ThreeDText from "@/components/ThreeDText"
 import ThreeDPosterWebGL from "@/components/ThreeDPosterWebGL"
 
 export default function LandingPage() {
@@ -18,7 +17,7 @@ export default function LandingPage() {
         
         <div className="flex items-center gap-8">
           <div className="hidden md:flex items-center gap-2 group cursor-pointer">
-            <span className="text-sm font-medium uppercase tracking-widest group-hover:text-gray-300 transition-colors text-white">Let's Talk</span>
+            <span className="text-sm font-medium uppercase tracking-widest group-hover:text-gray-300 transition-colors text-white">Let&apos;s Talk</span>
             <div className="w-2 h-2 rounded-full bg-white animate-pulse"></div>
           </div>
           <button className="text-sm font-medium uppercase tracking-widest hover:text-gray-300 transition-colors text-white">
@@ -59,7 +58,7 @@ export default function LandingPage() {
       <section className="h-screen bg-black flex flex-col items-center justify-center text-center p-6 relative">
         <div className="text-[10px] uppercase tracking-[0.3em] font-bold mb-8 text-white/50">Is Your Big Idea Ready to Go Wild?</div>
         <h2 className="text-6xl md:text-[120px] font-black uppercase leading-none tracking-tighter hover:scale-105 transition-transform duration-500 cursor-pointer">
-          LET'S WORK<br/>TOGETHER!
+          LET&apos;S WORK<br/>TOGETHER!
         </h2>
         
         <div className="mt-16 flex items-center gap-4">

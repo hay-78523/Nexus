@@ -57,8 +57,8 @@ export default function AIGenerator() {
       }
 
       setResultImage(data.imageUrl)
-    } catch (err: any) {
-      setError(err.message)
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to generate image')
     } finally {
       setIsGenerating(false)
     }

@@ -15,8 +15,9 @@ export async function POST(request: Request) {
       { error: 'Chưa cài đặt API Key cho AI (Fal.ai hoặc Replicate). Vui lòng cung cấp API Key để kết nối!' },
       { status: 501 }
     )
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('AI Generation error:', error)
-    return NextResponse.json({ error: error.message || 'Something went wrong' }, { status: 500 })
+    const message = error instanceof Error ? error.message : 'Something went wrong'
+    return NextResponse.json({ error: message }, { status: 500 })
   }
 }
