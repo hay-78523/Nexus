@@ -111,7 +111,7 @@ export default async function DashboardPage() {
             )}
             <form action={logout}>
               <button type="submit" className="w-full bg-white text-black border-4 border-black p-4 text-center hover:bg-red-500 hover:text-white hover:translate-x-1 hover:translate-y-1 shadow-[8px_8px_0_0_rgba(0,0,0,1)] hover:shadow-[0_0_0_0_rgba(0,0,0,1)] transition-all">
-                GET THE FUCK OUT (LOGOUT)
+                DISCONNECT (LOGOUT)
               </button>
             </form>
           </div>
