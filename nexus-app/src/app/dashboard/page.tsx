@@ -7,6 +7,7 @@ import Backdrop from '@/components/nx/Backdrop'
 import Marquee from '@/components/nx/Marquee'
 import Reveal from '@/components/nx/Reveal'
 import SectionLabel from '@/components/nx/SectionLabel'
+import Scene3D from '@/components/nx/Scene3D'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -21,7 +22,7 @@ export default async function DashboardPage() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('role, full_name, phone_number, email')
+    .select('role, phone_number, email')
     .eq('id', user.id)
     .single()
 
@@ -72,8 +73,10 @@ export default async function DashboardPage() {
         </header>
 
         {/* ---------- TIÊU ĐỀ ---------- */}
-        <section className="mx-auto max-w-[1500px] px-6 pb-10 pt-16 md:pt-24">
-          <Reveal>
+        <section className="relative mx-auto max-w-[1500px] px-6 pb-10 pt-16 md:pt-24">
+          <Scene3D className="left-auto right-[-8%] top-[-14%] hidden h-[130%] w-[62%] xl:block" />
+
+          <Reveal className="relative">
             <p className="font-mono text-[10px] uppercase tracking-[0.35em] text-acid">
               01 // Khu vực điều khiển
             </p>
@@ -101,20 +104,20 @@ export default async function DashboardPage() {
             <aside className="border border-white/10 bg-ink-panel">
               <div className="flex items-center justify-between border-b border-white/10 px-6 py-4">
                 <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-white/40">
-                  Hồ sơ
+                  Tài khoản
                 </span>
                 <span
-                  className={`px-2 py-1 font-mono text-[10px] font-bold uppercase tracking-[0.2em] ${
-                    isAdmin ? 'bg-acid text-black' : 'border border-white/20 text-white/60'
-                  }`}
-                >
-                  {profile?.role || 'user'}
-                </span>
+                  className={`h-1.5 w-1.5 rounded-full ${isAdmin ? 'bg-acid' : 'bg-white/30'}`}
+                />
               </div>
 
               <div className="px-6 py-6">
-                <p className="text-3xl font-black uppercase leading-[1.05] tracking-[-0.03em]">
-                  {profile?.full_name || 'Chưa đặt tên'}
+                <p
+                  className={`text-4xl font-black uppercase leading-[1.05] tracking-[-0.03em] ${
+                    isAdmin ? 'text-acid' : 'text-white'
+                  }`}
+                >
+                  {profile?.role || 'user'}
                 </p>
 
                 <dl className="mt-8 flex flex-col gap-5">

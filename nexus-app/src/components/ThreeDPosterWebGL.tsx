@@ -6,7 +6,7 @@ import { Environment, Lightformer, Float, ContactShadows, useGLTF } from "@react
 import { EffectComposer, Bloom, Vignette } from "@react-three/postprocessing";
 import * as THREE from "three";
 
-function CharacterModel() {
+function CharacterModel({ baseScale }: { baseScale: number }) {
   const groupRef = useRef<THREE.Group>(null);
   const [hovered, setHover] = useState(false);
   
@@ -48,8 +48,8 @@ function CharacterModel() {
         ref={groupRef}
         onPointerOver={() => setHover(true)}
         onPointerOut={() => setHover(false)}
-        position={[0, -6, 0]} 
-        scale={hovered ? 16 : 15}
+        position={[0, -6, 0]}
+        scale={hovered ? baseScale * 1.07 : baseScale}
       >
         <primitive object={scene} />
       </group>
@@ -57,11 +57,27 @@ function CharacterModel() {
   );
 }
 
-export default function ThreeDPosterWebGL() {
+type Variant = 'stage' | 'backdrop'
+
+export default function ThreeDPosterWebGL({
+  variant = 'stage',
+  className = '',
+}: {
+  /** 'stage': nhân vật chính ở landing. 'backdrop': lớp nền mờ, không bắt chuột. */
+  variant?: Variant
+  className?: string
+} = {}) {
+  const isBackdrop = variant === 'backdrop'
+
   return (
-    <div className="absolute inset-0 z-0 flex items-center justify-center pointer-events-auto mix-blend-screen">
+    <div
+      className={`absolute inset-0 z-0 flex items-center justify-center mix-blend-screen ${
+        isBackdrop ? 'pointer-events-none opacity-45' : 'pointer-events-auto'
+      } ${className}`}
+      aria-hidden={isBackdrop || undefined}
+    >
       {/* Kích hoạt dpr=[1,2] cho màn hình Retina, ACESFilmic để ánh sáng điện ảnh mượt mà */}
-      <Canvas shadows dpr={[1, 2]} camera={{ position: [0, 0, 10], fov: 45 }} gl={{ antialias: true, toneMapping: THREE.ACESFilmicToneMapping, alpha: true }}>
+      <Canvas shadows={!isBackdrop} dpr={isBackdrop ? [1, 1.25] : [1, 2]} camera={{ position: [0, 0, 10], fov: 45 }} gl={{ antialias: !isBackdrop, toneMapping: THREE.ACESFilmicToneMapping, alpha: true }}>
         
         {/* Ánh sáng tổng thể nhẹ nhàng */}
         <ambientLight intensity={0.2} color="#ccff00" />
@@ -87,7 +103,7 @@ export default function ThreeDPosterWebGL() {
           </group>
         </Environment>
 
-        <CharacterModel />
+        <CharacterModel baseScale={isBackdrop ? 11 : 15} />
 
         {/* Bóng đổ tiếp xúc dứoi đáy độ phân giải cao */}
         <ContactShadows 
@@ -101,10 +117,13 @@ export default function ThreeDPosterWebGL() {
         />
 
         {/* POST-PROCESSING: Sắc nét tối đa (multisampling=8), Bỏ Depth of Field để tránh bị mờ viền */}
-        <EffectComposer enableNormalPass={false} multisampling={8}>
-          <Bloom luminanceThreshold={0.8} mipmapBlur intensity={0.8} />
-          <Vignette eskil={false} offset={0.1} darkness={1.1} />
-        </EffectComposer>
+        {/* Nền bỏ hậu kỳ để đỡ tốn GPU, chỉ landing mới cần bloom và vignette */}
+        {!isBackdrop && (
+          <EffectComposer enableNormalPass={false} multisampling={8}>
+            <Bloom luminanceThreshold={0.8} mipmapBlur intensity={0.8} />
+            <Vignette eskil={false} offset={0.1} darkness={1.1} />
+          </EffectComposer>
+        )}
       </Canvas>
     </div>
   );
