@@ -1,75 +1,184 @@
-import { Button } from "@/components/ui/button"
-import Link from "next/link"
-import ThreeDPosterWebGL from "@/components/ThreeDPosterWebGL"
+import Link from 'next/link'
+import HeroCard from '@/components/nx/HeroCard'
+import Marquee from '@/components/nx/Marquee'
+import Reveal from '@/components/nx/Reveal'
+
+const STEPS = [
+  {
+    index: '01',
+    title: 'Tải một tấm ảnh',
+    body: 'Một ảnh chân dung sắc nét là đủ. Không cần huấn luyện mô hình, không cần máy cấu hình cao.',
+    meta: '~5 giây',
+  },
+  {
+    index: '02',
+    title: 'Chọn phong cách',
+    body: 'Dùng model dựng sẵn hoặc đưa lên một bức tranh mẫu để sao chép màu sắc và nét cọ.',
+    meta: 'Siêu thực · Hoạt hình · Tranh vẽ',
+  },
+  {
+    index: '03',
+    title: 'Nhận hàng trăm ảnh',
+    body: 'Khuôn mặt giữ nguyên qua mọi khung cảnh. Tải về cả loạt chỉ trong một lần bấm.',
+    meta: 'Tối đa 300 ảnh mỗi lượt',
+  },
+]
+
+const STATS = [
+  { value: '300', label: 'Ảnh mỗi lượt chạy' },
+  { value: '01', label: 'Ảnh mẫu cần tải lên' },
+  { value: '0đ', label: 'Chi phí máy chủ hàng tháng' },
+]
 
 export default function LandingPage() {
   return (
-    <div className="bg-[#090909] min-h-screen text-white font-sans overflow-x-hidden selection:bg-[#ccff00] selection:text-black">
-      
-      {/* HEADER */}
-      <header className="fixed top-0 left-0 w-full flex items-center justify-between px-6 py-6 z-50 mix-blend-difference pointer-events-auto">
-        <div className="flex items-center gap-4 cursor-pointer">
-          <svg xmlns="http://www.w3.org/2000/svg" width="40" height="24" fill="currentColor" viewBox="0 0 121 24" className="text-white">
-            <path d="M0 23.781V.22h3.871v20.129h10.132v3.433H0ZM22.76.118v13.666c0 2.222.438 3.893 1.313 5.015.875 1.1 2.233 1.65 4.073 1.65 1.862 0 3.231-.55 4.106-1.65.898-1.122 1.347-2.793 1.347-5.015V.118h3.87v13.464c0 3.366-.796 5.924-2.39 7.675-1.57 1.75-3.881 2.625-6.933 2.625-3.03 0-5.33-.875-6.9-2.625-1.572-1.75-2.357-4.309-2.357-7.675V.118h3.871Z"/>
-          </svg>
-          <span className="font-bold text-xl uppercase tracking-widest text-white">NEXUS</span>
-        </div>
-        
-        <div className="flex items-center gap-8">
-          <div className="hidden md:flex items-center gap-2 group cursor-pointer">
-            <span className="text-sm font-medium uppercase tracking-widest group-hover:text-gray-300 transition-colors text-white">Let&apos;s Talk</span>
-            <div className="w-2 h-2 rounded-full bg-white animate-pulse"></div>
+    <div className="min-h-screen bg-paper text-ink selection:bg-acid selection:text-black">
+      <div className="mx-auto max-w-[1600px] px-5 md:px-8">
+        {/* ---------- ĐẦU TRANG ---------- */}
+        <header className="flex flex-wrap items-start justify-between gap-6 py-6 md:py-8">
+          <div className="flex flex-wrap items-start gap-6 md:gap-12">
+            <Link
+              href="/"
+              className="text-2xl font-bold uppercase tracking-[0.14em] md:text-[26px]"
+            >
+              Nexus
+            </Link>
+            <p className="max-w-[380px] text-[15px] leading-snug text-ink/75 md:text-base">
+              Nền tảng sinh ảnh AI hàng loạt, giữ nguyên khuôn mặt và phong cách chỉ từ
+              một tấm ảnh mẫu.
+            </p>
           </div>
-          <button className="text-sm font-medium uppercase tracking-widest hover:text-gray-300 transition-colors text-white">
-            Menu
-          </button>
-        </div>
-      </header>
 
-      {/* HERO SECTION - Lusion Style (Minimal, Cinematic) */}
-      <section className="relative h-screen w-full flex items-center justify-center overflow-hidden bg-black">
-        
-        {/* Layer 1: 3D Environment (Real 3D Model) */}
-        <div className="absolute inset-0 z-10">
-          <ThreeDPosterWebGL />
-        </div>
-        
-        {/* Layer 2: Typography Overlay with Parallax */}
-        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center pointer-events-none mix-blend-difference text-[#ccff00]">
-           <h1 className="text-[60px] md:text-[120px] font-black uppercase leading-[0.8] tracking-tighter text-center mix-blend-difference">
-             DISCONNECTED<br/><span className="text-white">THE INTERNET</span>
-           </h1>
-           <p className="mt-8 text-white max-w-lg text-center opacity-80 text-sm">
-             We create 3D visual storytelling and interactive AI batch generation experiences that help creators stand out.
-           </p>
+          <nav className="flex items-center gap-2">
+            <span
+              aria-hidden
+              className="flex h-11 w-11 items-center justify-center rounded-full bg-ink/[0.06] text-ink/60"
+            >
+              —
+            </span>
+            <Link
+              href="/auth"
+              className="group flex h-11 items-center gap-2.5 rounded-full bg-ink px-6 text-[11px] font-bold uppercase tracking-[0.16em] text-paper transition-colors hover:bg-ink/85"
+            >
+              Bắt đầu
+              <span className="h-1.5 w-1.5 rounded-full bg-acid transition-transform group-hover:scale-150" />
+            </Link>
+            <Link
+              href="/dashboard"
+              className="flex h-11 items-center rounded-full bg-ink/[0.06] px-6 text-[11px] font-bold uppercase tracking-[0.16em] transition-colors hover:bg-ink/[0.12]"
+            >
+              Bảng điều khiển
+            </Link>
+          </nav>
+        </header>
+
+        {/* ---------- THẺ 3D ---------- */}
+        <HeroCard />
+
+        {/* ---------- DẢI CHÂN MÀN HÌNH ---------- */}
+        <div className="relative flex items-center justify-between border-t border-ink/10 py-5">
+          {['a', 'b', 'c', 'd'].map((k) => (
+            <span key={k} aria-hidden className="text-sm leading-none text-ink/25">
+              +
+            </span>
+          ))}
+          <span className="absolute left-1/2 -translate-x-1/2 text-[10px] font-bold uppercase tracking-[0.3em] text-ink/45">
+            Cuộn để xem tiếp
+          </span>
         </div>
 
-        {/* Footer info in Hero */}
-        <div className="absolute bottom-8 left-8 z-20 mix-blend-difference text-white max-w-xs pointer-events-auto">
-          <p className="text-xs uppercase tracking-widest font-bold mb-2">01 // Project Nexus</p>
-          <p className="text-sm font-light leading-relaxed text-gray-300">
-             We design and produce 3D visual storytelling, immersive websites, and interactive digital experiences.
-          </p>
-        </div>
-        
-      </section>
+        {/* ---------- CON SỐ ---------- */}
+        <Reveal className="grid grid-cols-1 gap-6 py-20 md:grid-cols-3 md:py-28">
+          {STATS.map((s) => (
+            <div key={s.label} className="border-t border-ink/15 pt-6">
+              <p className="text-7xl font-black tracking-[-0.05em] md:text-8xl">{s.value}</p>
+              <p className="mt-3 text-[11px] font-bold uppercase tracking-[0.22em] text-ink/50">
+                {s.label}
+              </p>
+            </div>
+          ))}
+        </Reveal>
+      </div>
 
-      {/* CALL TO ACTION */}
-      <section className="h-screen bg-black flex flex-col items-center justify-center text-center p-6 relative">
-        <div className="text-[10px] uppercase tracking-[0.3em] font-bold mb-8 text-white/50">Is Your Big Idea Ready to Go Wild?</div>
-        <h2 className="text-6xl md:text-[120px] font-black uppercase leading-none tracking-tighter hover:scale-105 transition-transform duration-500 cursor-pointer">
-          LET&apos;S WORK<br/>TOGETHER!
-        </h2>
-        
-        <div className="mt-16 flex items-center gap-4">
-          <Link href="/dashboard" passHref>
-            <Button variant="default" size="lg" className="bg-white text-black hover:bg-gray-200 rounded-full px-8 uppercase tracking-widest text-xs font-bold h-14 transition-colors">
-              Launch Core
-            </Button>
-          </Link>
-        </div>
-      </section>
+      {/* ---------- DẢI CHỮ CHẠY ---------- */}
+      <Marquee
+        text="GIỮ MẶT · GIỮ PHONG CÁCH · SINH HÀNG LOẠT ·"
+        className="border-y border-ink/10 py-7 text-4xl font-black uppercase leading-[1.25] tracking-[-0.02em] text-ink/15 md:text-6xl"
+      />
 
+      <div className="mx-auto max-w-[1600px] px-5 md:px-8">
+        {/* ---------- BA BƯỚC ---------- */}
+        <section className="py-24 md:py-32">
+          <Reveal>
+            <div className="flex flex-wrap items-end justify-between gap-6 border-b border-ink/15 pb-8">
+              <h2 className="max-w-2xl text-5xl font-black uppercase leading-[1.18] tracking-[-0.04em] md:text-7xl">
+                Ba bước,
+                <br />
+                <span className="nx-outline-ink">không hơn</span>
+              </h2>
+              <p className="max-w-xs text-[15px] leading-relaxed text-ink/60">
+                Không cài đặt, không huấn luyện mô hình. Mở trình duyệt lên là chạy được.
+              </p>
+            </div>
+          </Reveal>
+
+          <div className="mt-10 grid grid-cols-1 gap-5 md:grid-cols-3">
+            {STEPS.map((step, i) => (
+              <Reveal key={step.index} delay={i * 0.08}>
+                <article className="nx-lift flex h-full flex-col justify-between rounded-[24px] bg-white/70 p-8 md:p-10">
+                  <div>
+                    <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-ink/35">
+                      {step.index}
+                    </span>
+                    <h3 className="mt-8 text-3xl font-bold leading-[1.15] tracking-[-0.02em]">
+                      {step.title}
+                    </h3>
+                    <p className="mt-4 text-[15px] leading-relaxed text-ink/60">{step.body}</p>
+                  </div>
+                  <p className="mt-12 border-t border-ink/10 pt-5 text-[11px] font-bold uppercase tracking-[0.2em] text-ink/45">
+                    {step.meta}
+                  </p>
+                </article>
+              </Reveal>
+            ))}
+          </div>
+        </section>
+
+        {/* ---------- KÊU GỌI ---------- */}
+        <section className="pb-32 md:pb-44">
+          <Reveal>
+            <div className="relative overflow-hidden rounded-[32px] bg-ink px-8 py-24 text-center md:py-32">
+              <div className="absolute inset-0 nx-glow" aria-hidden />
+              <div className="relative">
+                <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-paper/45">
+                  Sẵn sàng chưa?
+                </p>
+                <h2 className="mt-8 text-[11vw] font-black uppercase leading-[1.14] tracking-[-0.045em] text-paper md:text-[8rem]">
+                  Bắt tay
+                  <br />
+                  <span className="text-acid">vào việc</span>
+                </h2>
+                <Link
+                  href="/auth"
+                  className="group mt-14 inline-flex h-16 items-center gap-4 rounded-full bg-acid px-12 text-[11px] font-bold uppercase tracking-[0.2em] text-black transition-all hover:gap-6"
+                >
+                  Vào Nexus
+                  <span aria-hidden className="text-base leading-none">
+                    →
+                  </span>
+                </Link>
+              </div>
+            </div>
+          </Reveal>
+        </section>
+      </div>
+
+      <footer className="border-t border-ink/10">
+        <div className="mx-auto flex max-w-[1600px] flex-col gap-2 px-5 py-8 text-[10px] font-bold uppercase tracking-[0.25em] text-ink/40 md:flex-row md:justify-between md:px-8">
+          <span>Nexus — AI Batch Generation</span>
+          <span>Entertainment 2020</span>
+        </div>
+      </footer>
     </div>
   )
 }

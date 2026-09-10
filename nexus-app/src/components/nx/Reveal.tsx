@@ -1,11 +1,13 @@
 'use client'
 
-import { motion } from 'framer-motion'
-import type { ReactNode } from 'react'
+import { useEffect, useRef, type ReactNode } from 'react'
 
 /**
- * Hiện dần từ dưới lên khi khối lọt vào khung nhìn. `delay` dùng để xếp
- * so le nhiều khối cạnh nhau.
+ * Hiện dần từ dưới lên khi khối lọt vào khung nhìn.
+ *
+ * Dùng IntersectionObserver cộng transition CSS thay vì thư viện chuyển
+ * động chạy trên requestAnimationFrame: transition do trình duyệt tự chạy
+ * ở tầng compositor, nên vẫn mượt khi cảnh 3D đang ăn hết luồng chính.
  */
 export default function Reveal({
   children,
@@ -16,16 +18,44 @@ export default function Reveal({
   delay?: number
   className?: string
 }) {
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+
+    const show = () => el.classList.add('is-visible')
+
+    // Trình duyệt không hỗ trợ thì hiện luôn, đừng để nội dung ẩn mất
+    if (typeof IntersectionObserver === 'undefined') {
+      show()
+      return
+    }
+
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            show()
+            io.disconnect()
+          }
+        }
+      },
+      { rootMargin: '0px 0px -60px 0px' }
+    )
+
+    io.observe(el)
+    return () => io.disconnect()
+  }, [])
+
   return (
-    <motion.div
+    <div
+      ref={ref}
       data-reveal
-      className={className}
-      initial={{ opacity: 0, y: 24 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: '-60px' }}
-      transition={{ duration: 0.7, delay, ease: [0.16, 1, 0.3, 1] }}
+      className={`nx-reveal ${className}`}
+      style={delay ? { transitionDelay: `${delay}s` } : undefined}
     >
       {children}
-    </motion.div>
+    </div>
   )
 }

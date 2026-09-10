@@ -141,6 +141,7 @@
 
 @theme {
   --color-acid: #ccff00;
+  --color-paper: #eef0fa;
   --color-ink: #050505;
   --color-ink-panel: #0b0b0b;
 }
@@ -192,6 +193,33 @@
   }
 }
 
+/* Chữ viền rỗng trên nền sáng, dùng cho lớp tiêu đề phụ. */
+.nx-outline-ink {
+  color: transparent;
+  -webkit-text-stroke: 2px rgb(5 5 5 / 0.22);
+}
+
+/* Nâng nhẹ khi rê chuột, dùng cho thẻ nội dung. */
+.nx-lift {
+  transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.45s ease;
+}
+
+.nx-lift:hover {
+  transform: translateY(-6px);
+}
+
+.nx-reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.nx-reveal.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
 @keyframes nx-marquee {
   from { transform: translateX(0); }
   to { transform: translateX(-50%); }
@@ -214,5 +242,17 @@
   .animate-nx-marquee,
   .animate-nx-sweep {
     animation: none;
+  }
+
+  .nx-reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  .nx-lift,
+  .nx-lift:hover {
+    transform: none;
+    transition: none;
   }
 }

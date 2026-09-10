@@ -2,6 +2,7 @@
 
 import dynamic from 'next/dynamic'
 import { useEffect, useState } from 'react'
+import { hasWebGL } from '@/lib/webgl'
 
 /**
  * Nạp cảnh 3D sau khi trang đã dựng xong. Model nặng gần 12MB nên không
@@ -19,6 +20,7 @@ export default function Scene3D({ className = '' }: { className?: string }) {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
     // Bỏ qua trên màn hình hẹp: tốn pin mà gần như không thấy gì
     if (window.matchMedia('(max-width: 1024px)').matches) return
+    if (!hasWebGL()) return
 
     const idle = window.requestIdleCallback ?? ((cb: () => void) => window.setTimeout(cb, 800))
     const id = idle(() => setEnabled(true))

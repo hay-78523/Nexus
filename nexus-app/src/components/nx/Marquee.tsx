@@ -16,7 +16,7 @@ export default function Marquee({
   ))
 
   return (
-    <div className={`relative overflow-hidden ${className}`} aria-hidden>
+    <div className={`relative overflow-x-clip ${className}`} aria-hidden>
       <div className="flex w-max animate-nx-marquee whitespace-nowrap">
         {strip}
         {strip}
