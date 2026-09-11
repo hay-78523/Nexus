@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useSyncExternalStore } from 'react'
 import ThreeDPosterWebGL from '@/components/ThreeDPosterWebGL'
+import LiquidSphere from '@/components/nx/LiquidSphere'
 import { hasWebGL, subscribeNever } from '@/lib/webgl'
 import { useMediaQuery } from '@/lib/useMediaQuery'
 
@@ -58,12 +59,8 @@ export default function HeroCard() {
       ref={ref}
       className="relative h-[calc(100vh-190px)] min-h-[440px] w-full origin-top overflow-hidden rounded-[28px] bg-black will-change-transform"
     >
-      {/* Nền Galaxy thực tế trích xuất từ ảnh */}
-      <img 
-        src="/galaxy_bg.png" 
-        alt="Galaxy Background" 
-        className="absolute inset-0 h-[150%] w-[150%] -top-[25%] -left-[25%] object-cover animate-nx-galaxy-spin pointer-events-none" 
-      />
+      {/* Khối cầu vân chất lỏng làm nền, sinh bằng shader nên vân cuộn thật */}
+      <LiquidSphere />
       {show3D ? (
         <ThreeDPosterWebGL />
       ) : (
