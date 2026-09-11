@@ -24,11 +24,6 @@ const STEPS = [
   },
 ]
 
-const STATS = [
-  { value: '300', label: 'Ảnh mỗi lượt chạy' },
-  { value: '01', label: 'Ảnh mẫu cần tải lên' },
-  { value: '0đ', label: 'Chi phí máy chủ hàng tháng' },
-]
 
 export default function LandingPage() {
   return (
@@ -86,18 +81,6 @@ export default function LandingPage() {
             Cuộn để xem tiếp
           </span>
         </div>
-
-        {/* ---------- CON SỐ ---------- */}
-        <Reveal className="grid grid-cols-1 gap-6 py-20 md:grid-cols-3 md:py-28">
-          {STATS.map((s) => (
-            <div key={s.label} className="border-t border-ink/15 pt-6">
-              <p className="text-7xl font-black tracking-[-0.05em] md:text-8xl">{s.value}</p>
-              <p className="mt-3 text-[11px] font-bold uppercase tracking-[0.22em] text-ink/50">
-                {s.label}
-              </p>
-            </div>
-          ))}
-        </Reveal>
       </div>
 
       {/* ---------- DẢI CHỮ CHẠY ---------- */}

@@ -56,8 +56,14 @@ export default function HeroCard() {
   return (
     <div
       ref={ref}
-      className="relative h-[calc(100vh-190px)] min-h-[440px] w-full origin-top overflow-hidden rounded-[28px] bg-[#101114] will-change-transform"
+      className="relative h-[calc(100vh-190px)] min-h-[440px] w-full origin-top overflow-hidden rounded-[28px] bg-black will-change-transform"
     >
+      {/* Nền Galaxy thực tế trích xuất từ ảnh */}
+      <img 
+        src="/galaxy_bg.png" 
+        alt="Galaxy Background" 
+        className="absolute inset-0 h-[150%] w-[150%] -top-[25%] -left-[25%] object-cover animate-nx-galaxy-spin pointer-events-none" 
+      />
       {show3D ? (
         <ThreeDPosterWebGL />
       ) : (
