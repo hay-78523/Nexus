@@ -120,20 +120,20 @@ const fragmentShader = /* glsl */ `
     // Lệch sắc theo trường bẻ miền: hai vùng cùng độ sáng vẫn khác tông,
     // đây là thứ làm bề mặt trông có chiều sâu thay vì tô một màu.
     float hueShift = smoothstep(-0.35, 0.45, q.x);
-    col = mix(col, col * uMid2 * 1.9, hueShift * 0.5);
+    col = mix(col, col * uMid2 * 1.55, hueShift * 0.42);
 
     // Gân sáng mảnh chạy dọc đường vân, nhịp thở chậm
     float veinPulse = 0.80 + 0.06 * sin(uTime * 0.5);
     float vein = smoothstep(veinPulse, 0.99, length(r));
-    col += uAccent * vein * 0.30;
+    col += uAccent * vein * 0.20;
 
     // Viền sáng quanh mép cầu
     float fresnel = pow(1.0 - clamp(dot(normalize(vNormalW), normalize(vViewDir)), 0.0, 1.0), 2.6);
-    col += uGlow * fresnel * 0.5;
+    col += uGlow * fresnel * 0.42;
 
     // Nửa khuất tối dần cho ra khối
     float shade = smoothstep(-0.5, 0.9, dot(normalize(vNormalW), normalize(vec3(0.72, 0.34, 0.6))));
-    col *= mix(0.03, 1.0, shade);
+    col *= mix(0.22, 1.0, shade);
 
     gl_FragColor = vec4(col, 1.0);
   }
@@ -146,12 +146,12 @@ function Sphere() {
   const uniforms = useMemo(
     () => ({
       uTime: { value: 0 },
-      uDeep: { value: new THREE.Color('#0a0418') },   // gần đen, ám mận
-      uMid: { value: new THREE.Color('#4c1d95') },    // tím indigo trầm
-      uMid2: { value: new THREE.Color('#b14ae8') },   // dùng để lệch sắc, không tô trực tiếp
-      uAccent: { value: new THREE.Color('#a855f7') }, // tím sáng, màu chính của vân
-      uLight: { value: new THREE.Color('#f0d9ff') },  // hoa cà nhạt ở đỉnh sáng
-      uGlow: { value: new THREE.Color('#c084fc') },   // viền tím quanh mép
+      uDeep: { value: new THREE.Color('#241b3d') },   // mận xám, không xuống tới đen
+      uMid: { value: new THREE.Color('#6d5da3') },    // tím khói
+      uMid2: { value: new THREE.Color('#c7b3e8') },   // dùng để lệch sắc, không tô trực tiếp
+      uAccent: { value: new THREE.Color('#b9a6e6') }, // hoa cà nhạt, màu chính của vân
+      uLight: { value: new THREE.Color('#f3ecff') },  // trắng ám tím ở đỉnh sáng
+      uGlow: { value: new THREE.Color('#d9c8f5') },   // viền tím sữa
     }),
     []
   )
