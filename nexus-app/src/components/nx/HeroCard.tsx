@@ -73,12 +73,19 @@ export default function HeroCard() {
         />
       )}
 
+      {/* Vệt tối chân thẻ: nền lavender rất sáng nên chữ trắng đặt thẳng lên
+          sẽ không đọc được */}
+      <div
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-black/75 via-black/35 to-transparent"
+        aria-hidden
+      />
+
       {/* Nhãn góc, đặt trên cảnh 3D */}
       <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-between p-6 md:p-8">
-        <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-white/45">
+        <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-white/70">
           01 // Nexus Engine
         </p>
-        <p className="hidden max-w-[240px] text-right text-[11px] leading-relaxed text-white/40 md:block">
+        <p className="hidden max-w-[240px] text-right text-[11px] leading-relaxed text-white/65 md:block">
           Giữ nguyên khuôn mặt và phong cách qua hàng trăm khung hình.
         </p>
       </div>
