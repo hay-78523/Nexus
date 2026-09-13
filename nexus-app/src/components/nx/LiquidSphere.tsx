@@ -34,6 +34,8 @@ const fragmentShader = /* glsl */ `
   uniform float uTime;
   uniform vec3 uDeep;
   uniform vec3 uMid;
+  uniform vec3 uMid2;
+  uniform vec3 uAccent;
   uniform vec3 uLight;
   uniform vec3 uGlow;
 
@@ -81,42 +83,57 @@ const fragmentShader = /* glsl */ `
     return sum;
   }
 
-  void main() {
-    float t = uTime * 0.06;
-    vec3 p = vPos * 1.9;
+  // Xoay mặt phẳng quanh trục Y, dùng để cả khối vân trôi chậm
+  vec3 swirl(vec3 p, float a) {
+    float c = cos(a);
+    float s = sin(a);
+    return vec3(c * p.x - s * p.z, p.y, s * p.x + c * p.z);
+  }
 
-    // Bẻ miền hai lượt: đây là thứ tạo ra vân xoáy kiểu đá hoa,
-    // fbm trơn một lượt chỉ ra mây mờ chứ không ra vân.
+  void main() {
+    float t = uTime * 0.11;
+
+    // Cả trường nhiễu tự xoay, cộng thêm từng lớp bẻ miền chạy khác tốc độ
+    // và khác hướng. Nhờ vậy vân không chỉ trôi ngang mà thực sự cuộn vào nhau.
+    vec3 p = swirl(vPos * 1.9, uTime * 0.035);
+
     vec3 q = vec3(
-      fbm(p + vec3(0.0, 0.0, t)),
-      fbm(p + vec3(5.2, 1.3, t)),
-      fbm(p + vec3(2.7, 8.3, t * 0.7))
+      fbm(p + vec3(0.0, t * 0.8, t)),
+      fbm(p + vec3(5.2, 1.3 - t * 0.6, t * 1.3)),
+      fbm(p + vec3(2.7, 8.3, -t * 0.9))
     );
 
     vec3 r = vec3(
-      fbm(p + 3.2 * q + vec3(1.7, 9.2, t * 1.1)),
-      fbm(p + 3.2 * q + vec3(8.3, 2.8, t * 0.9)),
-      fbm(p + 3.2 * q + vec3(4.1, 6.4, t))
+      fbm(p + 3.2 * q + vec3(1.7, 9.2, t * 1.4)),
+      fbm(p + 3.2 * q + vec3(8.3 - t * 0.5, 2.8, -t * 1.1)),
+      fbm(p + 3.2 * q + vec3(4.1, 6.4 + t * 0.7, t))
     );
 
     float f = fbm(p + 3.6 * r);
     f = clamp(f * 1.5 + 0.5, 0.0, 1.0);
 
-    // Dải màu: sâu -> tím -> sáng
-    vec3 col = mix(uDeep, uMid, smoothstep(0.18, 0.66, f));
-    col = mix(col, uLight, smoothstep(0.70, 0.97, f));
+    // Dải màu bốn bậc: chỉ một bậc tím thì vùng sáng bệt thành mảng xanh.
+    vec3 col = mix(uDeep, uMid, smoothstep(0.22, 0.60, f));
+    col = mix(col, uAccent, smoothstep(0.58, 0.84, f));
+    col = mix(col, uLight, smoothstep(0.86, 0.99, f));
 
-    // Gân sáng mảnh chạy dọc các đường vân
-    float vein = smoothstep(0.72, 0.99, length(r));
-    col += uLight * vein * 0.22;
+    // Lệch sắc theo trường bẻ miền: hai vùng cùng độ sáng vẫn khác tông,
+    // đây là thứ làm bề mặt trông có chiều sâu thay vì tô một màu.
+    float hueShift = smoothstep(-0.35, 0.45, q.x);
+    col = mix(col, col * uMid2 * 1.9, hueShift * 0.5);
+
+    // Gân sáng mảnh chạy dọc đường vân, nhịp thở chậm
+    float veinPulse = 0.80 + 0.06 * sin(uTime * 0.5);
+    float vein = smoothstep(veinPulse, 0.99, length(r));
+    col += uAccent * vein * 0.30;
 
     // Viền sáng quanh mép cầu
     float fresnel = pow(1.0 - clamp(dot(normalize(vNormalW), normalize(vViewDir)), 0.0, 1.0), 2.6);
-    col += uGlow * fresnel * 0.55;
+    col += uGlow * fresnel * 0.5;
 
     // Nửa khuất tối dần cho ra khối
-    float shade = smoothstep(-0.55, 0.85, dot(normalize(vNormalW), normalize(vec3(0.75, 0.35, 0.6))));
-    col *= mix(0.04, 1.0, shade);
+    float shade = smoothstep(-0.5, 0.9, dot(normalize(vNormalW), normalize(vec3(0.72, 0.34, 0.6))));
+    col *= mix(0.03, 1.0, shade);
 
     gl_FragColor = vec4(col, 1.0);
   }
@@ -129,10 +146,12 @@ function Sphere() {
   const uniforms = useMemo(
     () => ({
       uTime: { value: 0 },
-      uDeep: { value: new THREE.Color('#090014') }, // Tím đen sâu thẳm
-      uMid: { value: new THREE.Color('#4a00e0') }, // Tím dạ quang
-      uLight: { value: new THREE.Color('#ff007a') }, // Hồng neon cho các đường vân
-      uGlow: { value: new THREE.Color('#00f0ff') }, // Ánh sáng viền xanh Cyan
+      uDeep: { value: new THREE.Color('#0a0418') },   // gần đen, ám mận
+      uMid: { value: new THREE.Color('#4c1d95') },    // tím indigo trầm
+      uMid2: { value: new THREE.Color('#b14ae8') },   // dùng để lệch sắc, không tô trực tiếp
+      uAccent: { value: new THREE.Color('#a855f7') }, // tím sáng, màu chính của vân
+      uLight: { value: new THREE.Color('#f0d9ff') },  // hoa cà nhạt ở đỉnh sáng
+      uGlow: { value: new THREE.Color('#c084fc') },   // viền tím quanh mép
     }),
     []
   )
