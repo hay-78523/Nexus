@@ -136,10 +136,10 @@
 }
 
 @theme {
-  --color-acid: #ccff00;
+  --color-acid: #ff007a; /* Đổi màu nhấn (accent) từ Xanh chanh sang Hồng Neon */
   --color-paper: #eef0fa;
-  --color-ink: #050505;
-  --color-ink-panel: #0b0b0b;
+  --color-ink: #050010; /* Đen pha tím cực đậm */
+  --color-ink-panel: #110026; /* Tím đậm cho các panel */
 }
 
 @layer utilities {

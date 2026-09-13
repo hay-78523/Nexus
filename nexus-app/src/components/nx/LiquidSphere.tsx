@@ -126,14 +126,13 @@ function Sphere() {
   const meshRef = useRef<THREE.Mesh>(null)
   const materialRef = useRef<THREE.ShaderMaterial>(null)
 
-  // Giá trị khởi tạo; về sau chỉ sửa qua materialRef trong vòng lặp khung hình
   const uniforms = useMemo(
     () => ({
       uTime: { value: 0 },
-      uDeep: { value: new THREE.Color('#0a0b24') },
-      uMid: { value: new THREE.Color('#3a2b80') },
-      uLight: { value: new THREE.Color('#c9b6ff') },
-      uGlow: { value: new THREE.Color('#a78bfa') },
+      uDeep: { value: new THREE.Color('#090014') }, // Tím đen sâu thẳm
+      uMid: { value: new THREE.Color('#4a00e0') }, // Tím dạ quang
+      uLight: { value: new THREE.Color('#ff007a') }, // Hồng neon cho các đường vân
+      uGlow: { value: new THREE.Color('#00f0ff') }, // Ánh sáng viền xanh Cyan
     }),
     []
   )
