@@ -6,10 +6,15 @@ import { Environment, Lightformer, Float, ContactShadows, Sparkles, useGLTF } fr
 import { EffectComposer, Bloom, ChromaticAberration, Vignette } from "@react-three/postprocessing";
 import * as THREE from "three";
 
-/** Bảng màu ánh sáng */
-const KEY = "#ccff00";
-const RIM_WARM = "#ff00aa"; // Hot Pink
-const RIM_COOL = "#00f0ff"; // Cyan
+/**
+ * Bảng màu ánh sáng, lấy theo họ tím của nền để cả khung hình về một tông.
+ * Đèn chính gần trắng chứ không phải màu bão hoà: bề mặt bóng cần một nguồn
+ * trung tính để ra điểm sáng sạch, màu để dành cho đèn viền.
+ */
+const KEY = "#fdfaff";      // trắng ám tím, đèn chính
+const FILL = "#8f7ec4";     // tím khói, đèn bù phía đối diện
+const RIM_LILAC = "#c9a8ff"; // tím sáng, viền chính
+const RIM_PINK = "#ff007a";  // hồng thương hiệu, viền phụ
 
 /**
  * Đổi chất liệu gốc sang MeshPhysicalMaterial siêu rực rỡ
@@ -27,15 +32,18 @@ function upgradeMaterials(scene: THREE.Object3D) {
     const old = child.material as THREE.MeshStandardMaterial;
 
     const next = new THREE.MeshPhysicalMaterial({
-      color: new THREE.Color("#1a1a24"), // Nền tối xám/xanh để tôn màu ngũ sắc
-      metalness: 0.9,
-      roughness: 0.15,
+      color: new THREE.Color("#1a1a24"),
+      metalness: 0.88,
+      roughness: 0.24,
       envMapIntensity: 1.5,
       clearcoat: 1,
-      clearcoatRoughness: 0.1,
-      iridescence: 1.0, // Bật ngũ sắc tối đa
-      iridescenceIOR: 1.5,
-      iridescenceThicknessRange: [100, 800], // Phạm vi màu ngũ sắc
+      clearcoatRoughness: 0.16,
+      // Ngũ sắc để hết cỡ cộng với normal map của model sinh ra đám lốm đốm
+      // cầu vồng trông như nhiễu. Hạ xuống vừa phải thì còn ánh chuyển sắc
+      // mà bề mặt vẫn đọc ra là một khối liền.
+      iridescence: 0.45,
+      iridescenceIOR: 1.4,
+      iridescenceThicknessRange: [220, 620],
     });
 
     if (old) {
@@ -60,30 +68,37 @@ function CharacterModel({ baseScale }: { baseScale: number }) {
     if (scene) upgradeMaterials(scene);
   }, [scene]);
 
-  useFrame((state) => {
-    if (!groupRef.current) return;
+  useFrame((state, delta) => {
+    const g = groupRef.current;
+    if (!g) return;
 
     const t = state.clock.elapsedTime;
-    const swing = Math.sin(t * 0.22) * 0.34;
-    const aimY = hovered ? (state.pointer.x * Math.PI) / 9 : 0;
-    const aimX = hovered ? (state.pointer.y * Math.PI) / 11 : 0;
 
-    groupRef.current.rotation.y = THREE.MathUtils.lerp(
-      groupRef.current.rotation.y,
-      swing + aimY,
-      0.06
-    );
-    groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, -aimX, 0.06);
+    // Trôi nhẹ khi không ai đụng tới, cộng với hướng nhìn bám theo con trỏ.
+    // Bám cả khi chưa rê vào model, nếu đợi hover mới phản hồi thì lúc chuột
+    // đi ngang qua sẽ thấy nó giật một cái.
+    const idle = Math.sin(t * 0.18) * 0.14;
+    const aimY = idle + state.pointer.x * 0.40;
+    const aimX = -state.pointer.y * 0.24;
+
+    // damp giảm chấn theo delta nên tốc độ chuyển động không đổi giữa máy
+    // 60fps và máy 144fps; lerp với hệ số cố định thì máy nhanh sẽ chạy nhanh hơn.
+    g.rotation.y = THREE.MathUtils.damp(g.rotation.y, aimY, 2.4, delta);
+    g.rotation.x = THREE.MathUtils.damp(g.rotation.x, aimX, 2.4, delta);
+
+    const targetScale = hovered ? baseScale * 1.05 : baseScale;
+    const nextScale = THREE.MathUtils.damp(g.scale.x, targetScale, 3.5, delta);
+    g.scale.setScalar(nextScale);
   });
 
   return (
-    <Float speed={1.5} rotationIntensity={0.1} floatIntensity={0.2}>
+    <Float speed={1.1} rotationIntensity={0.05} floatIntensity={0.14}>
       <group
         ref={groupRef}
         onPointerOver={() => setHover(true)}
         onPointerOut={() => setHover(false)}
         position={[0, -6, 0]}
-        scale={hovered ? baseScale * 1.07 : baseScale}
+        scale={baseScale}
       >
         <primitive object={scene} />
       </group>
@@ -91,23 +106,40 @@ function CharacterModel({ baseScale }: { baseScale: number }) {
   );
 }
 
-/** Giàn đèn nhiều màu quay quanh nhân vật */
-function LightRig() {
+/**
+ * Camera dịch nhẹ ngược chiều con trỏ. Đây là thứ tạo cảm giác chiều sâu
+ * thật: chỉ xoay vật thể thì mắt vẫn đọc ra là một hình phẳng đang quay.
+ */
+function CameraParallax() {
+  const target = useMemo(() => new THREE.Vector3(0, 0, 0), []);
+
+  useFrame((state, delta) => {
+    const cam = state.camera;
+    cam.position.x = THREE.MathUtils.damp(cam.position.x, state.pointer.x * 0.75, 1.8, delta);
+    cam.position.y = THREE.MathUtils.damp(cam.position.y, state.pointer.y * 0.45, 1.8, delta);
+    cam.lookAt(target);
+  });
+
+  return null;
+}
+
+/**
+ * Giàn đèn viền quay rất chậm quanh nhân vật. Chỉ hai đèn màu để chuyển sắc
+ * nhẹ trên bề mặt bóng; đèn chính nằm ngoài giàn này và đứng yên, nếu cho
+ * nguồn sáng chính quay theo thì điểm sáng chạy loạn, mất vẻ tĩnh của studio.
+ */
+function RimRig() {
   const ref = useRef<THREE.Group>(null);
 
-  useFrame((state) => {
+  useFrame((state, delta) => {
     if (!ref.current) return;
-    const t = state.clock.elapsedTime;
-    ref.current.rotation.y = t * 0.15; // Quay nhanh hơn một chút
+    ref.current.rotation.y += delta * 0.06;
   });
 
   return (
     <group ref={ref}>
-      <pointLight position={[6, 3, 6]} intensity={120} color="#ccff00" distance={50} decay={2} />
-      <pointLight position={[-6, 3, 6]} intensity={150} color="#ff00aa" distance={50} decay={2} />
-      <pointLight position={[0, -5, 6]} intensity={150} color="#00f0ff" distance={50} decay={2} />
-      <pointLight position={[6, 0, -6]} intensity={120} color="#ffaa00" distance={50} decay={2} />
-      <pointLight position={[-6, 0, -6]} intensity={120} color="#aa00ff" distance={50} decay={2} />
+      <pointLight position={[-7, 2, -5]} intensity={70} color={RIM_LILAC} distance={34} decay={2} />
+      <pointLight position={[7, -1, -5]} intensity={40} color={RIM_PINK} distance={30} decay={2} />
     </group>
   );
 }
@@ -137,36 +169,44 @@ export default function ThreeDPosterWebGL({
         camera={{ position: [0, 0, 10], fov: 45 }}
         gl={{ antialias: !isBackdrop, toneMapping: THREE.ACESFilmicToneMapping, alpha: true }}
       >
-        <ambientLight intensity={0.25} color="#8899aa" />
+        {!isBackdrop && <CameraParallax />}
 
+        <ambientLight intensity={0.35} color="#9b8fc4" />
+
+        {/* Đèn chính đứng yên, gần trắng, đánh chéo từ trên phải phía trước */}
         <spotLight
-          position={[5, 6, 9]}
-          angle={0.5}
-          penumbra={0.6}
-          intensity={7}
+          position={[6, 7, 9]}
+          angle={0.55}
+          penumbra={0.85}
+          intensity={9}
           castShadow={!isBackdrop}
           shadow-mapSize={[2048, 2048]}
           color={KEY}
         />
 
-        <directionalLight position={[0, 6, -9]} intensity={2.2} color="#ffffff" />
+        {/* Đèn bù phía đối diện, yếu, để nửa khuất không rơi vào đen đặc */}
+        <directionalLight position={[-8, 1, 4]} intensity={2.6} color={FILL} />
 
-        <LightRig />
+        {/* Đèn viền sau tách khối khỏi nền lavender vốn cũng sáng */}
+        <directionalLight position={[0, 5, -10]} intensity={3.2} color={RIM_LILAC} />
+
+        <RimRig />
 
         <Environment resolution={256}>
-          {/* Đã gỡ bỏ background đen để thấy được nền Galaxy phía sau Canvas */}
+          {/* Không đặt background để thấy khối cầu nền phía sau Canvas */}
 
-          <Lightformer form="rect" intensity={5} position={[0, 6, 1]} rotation-x={Math.PI / 2} scale={[14, 8, 1]} color={KEY} />
-          <Lightformer form="rect" intensity={3.5} position={[-7, 1, -2]} rotation-y={Math.PI / 2} scale={[10, 8, 1]} color={RIM_WARM} />
-          <Lightformer form="rect" intensity={3.5} position={[7, 1, -2]} rotation-y={-Math.PI / 2} scale={[10, 8, 1]} color={RIM_COOL} />
-          <Lightformer form="circle" intensity={6} position={[3, 4, 6]} scale={2.5} color="#ffffff" />
-          <Lightformer form="rect" intensity={1.2} position={[0, -6, 2]} rotation-x={-Math.PI / 2} scale={[12, 6, 1]} color={KEY} />
+          {/* Tấm sáng lớn phía trên là nguồn phản chiếu chính của bề mặt bóng */}
+          <Lightformer form="rect" intensity={4} position={[0, 6, 2]} rotation-x={Math.PI / 2} scale={[14, 8, 1]} color={KEY} />
+          <Lightformer form="rect" intensity={2.2} position={[-7, 1, -2]} rotation-y={Math.PI / 2} scale={[10, 8, 1]} color={RIM_LILAC} />
+          <Lightformer form="rect" intensity={1.6} position={[7, 1, -2]} rotation-y={-Math.PI / 2} scale={[10, 8, 1]} color={RIM_PINK} />
+          <Lightformer form="circle" intensity={5} position={[3, 4, 6]} scale={2.5} color={KEY} />
+          <Lightformer form="rect" intensity={1} position={[0, -6, 2]} rotation-x={-Math.PI / 2} scale={[12, 6, 1]} color={FILL} />
         </Environment>
 
         <CharacterModel baseScale={isBackdrop ? 11 : 15} />
 
         {!isBackdrop && (
-          <Sparkles count={150} scale={[14, 14, 14]} size={3} speed={0.5} opacity={0.5} color="#ffffff" />
+          <Sparkles count={60} scale={[14, 14, 14]} size={2} speed={0.22} opacity={0.28} color="#ffffff" />
         )}
 
         <ContactShadows

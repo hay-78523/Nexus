@@ -181,7 +181,7 @@ grant select, update on public.profiles to authenticated;
 -- admin đang hiển thị là user.
 -- ---------------------------------------------------------------------------
 
--- update public.profiles set role = 'admin' where email = 'truyenthong@starlight.vn';
+-- update public.profiles set role = 'admin' where email = 'admin@nexus.com';
 
 -- Kiểm tra lại sau khi chạy:
 -- select id, email, full_name, role from public.profiles order by role;
