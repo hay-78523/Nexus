@@ -32,6 +32,7 @@ const fragmentShader = /* glsl */ `
   precision highp float;
 
   uniform float uTime;
+  uniform vec3 uInk;
   uniform vec3 uDeep;
   uniform vec3 uMid;
   uniform vec3 uMid2;
@@ -117,6 +118,15 @@ const fragmentShader = /* glsl */ `
     col = mix(col, uAccent, smoothstep(0.58, 0.84, f));
     col = mix(col, uLight, smoothstep(0.86, 0.99, f));
 
+    // Vũng sẫm nơi màu đọng lại. Chỉ ăn vào khoảng tối nhất của trường nhiễu
+    // nên phần lớn bề mặt vẫn giữ tông pastel, chỉ điểm xuyết vài mảng sâu.
+    float pool = 1.0 - smoothstep(0.0, 0.30, f);
+    col = mix(col, uInk, pool * 0.88);
+
+    // Viền sẫm mảnh nơi nước khô lại, chạy men theo rìa các mảng màu
+    float edge = smoothstep(0.30, 0.35, f) - smoothstep(0.37, 0.46, f);
+    col = mix(col, uInk, clamp(edge, 0.0, 1.0) * 0.42);
+
     // Lệch sắc theo trường bẻ miền: hai vùng cùng độ sáng vẫn khác tông,
     // đây là thứ làm bề mặt trông có chiều sâu thay vì tô một màu.
     float hueShift = smoothstep(-0.35, 0.45, q.x);
@@ -148,7 +158,8 @@ function Sphere() {
       uTime: { value: 0 },
       // Lấy theo tông màu nước lavender: chỗ tối nhất vẫn là tím nhạt,
       // không có vùng nào xuống tới tím đậm hay xám.
-      uDeep: { value: new THREE.Color('#b298e0') },   // lavender vừa, đây là chỗ đậm nhất
+      uInk: { value: new THREE.Color('#2b1d4f') },    // tím gần đen, chỉ dùng cho chỗ đọng màu
+      uDeep: { value: new THREE.Color('#b298e0') },   // lavender vừa, nền chung
       uMid: { value: new THREE.Color('#cab2ef') },    // lavender sáng
       uMid2: { value: new THREE.Color('#e8ddfa') },   // dùng để lệch sắc, không tô trực tiếp
       uAccent: { value: new THREE.Color('#ddd0f7') }, // tím sữa cho vân
