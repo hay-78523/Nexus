@@ -2,7 +2,7 @@
 import React, { useRef, useState, useMemo, useEffect } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Environment, Lightformer, Float, ContactShadows, Sparkles, useGLTF, Center } from "@react-three/drei";
-import { EffectComposer, Bloom, ChromaticAberration, Vignette } from "@react-three/postprocessing";
+import { EffectComposer, Bloom, Vignette } from "@react-three/postprocessing";
 import * as THREE from "three";
 
 /**
@@ -28,7 +28,7 @@ function upgradeMaterials(scene: THREE.Object3D) {
     if (child.userData.nxUpgraded) return;
     child.userData.nxUpgraded = true;
 
-    const upgradeSingleMaterial = (old: any) => {
+    const upgradeSingleMaterial = (old: THREE.Material | null) => {
       const next = new THREE.MeshPhysicalMaterial({
         color: new THREE.Color("#e8e6e1"), // Màu trắng ngà thạch cao
         metalness: 0.05,                   // Không mang tính kim loại
@@ -37,11 +37,14 @@ function upgradeMaterials(scene: THREE.Object3D) {
         clearcoat: 0,                      // Loại bỏ lớp phủ bóng
       });
 
-      if (old) {
-        next.normalMap = old.normalMap ?? null;
+      // GLTF luôn nạp ra MeshStandardMaterial, nhưng kiểu khai báo chỉ là Material
+      // nên phải ép kiểu mới đọc được các map.
+      const std = old as THREE.MeshStandardMaterial | null;
+      if (std) {
+        next.normalMap = std.normalMap ?? null;
         // Bỏ qua roughness map và metalness map cũ để giữ độ nhám tuyệt đối của thạch cao
-        next.aoMap = old.aoMap ?? null;
-        if (typeof old.dispose === 'function') old.dispose();
+        next.aoMap = std.aoMap ?? null;
+        std.dispose();
       }
       return next;
     };
@@ -95,7 +98,10 @@ function CharacterModel({ baseScale }: { baseScale: number }) {
         onPointerOver={() => setHover(true)}
         onPointerOut={() => setHover(false)}
         scale={baseScale}
-        position={[0, -3.5, 0]} // Căn đầu vào giữa khung hình, đế chìm hoàn toàn
+        // Model cao 1,876 đơn vị. Camera fov 45 ở z=10 nên khung hình chỉ cao
+        // 2*10*tan(22,5°) ≈ 8,28 đơn vị: mọi hệ số scale phải tính ngược từ con
+        // số đó, không ước chừng. Hạ nhẹ xuống để đế bị cắt ở mép dưới.
+        position={[0, -0.6, 0]}
       >
         <Center>
           <primitive object={scene} />
@@ -137,8 +143,8 @@ function RimRig() {
 
   return (
     <group ref={ref}>
-      <pointLight position={[-7, 2, -5]} intensity={70} color={RIM_LILAC} distance={34} decay={2} />
-      <pointLight position={[7, -1, -5]} intensity={40} color={RIM_PINK} distance={30} decay={2} />
+      <pointLight position={[-7, 2, -5]} intensity={45} color={RIM_LILAC} distance={34} decay={2} />
+      <pointLight position={[7, -1, -5]} intensity={26} color={RIM_PINK} distance={30} decay={2} />
     </group>
   );
 }
@@ -153,7 +159,6 @@ export default function ThreeDPosterWebGL({
   className?: string;
 } = {}) {
   const isBackdrop = variant === "backdrop";
-  const aberration = useMemo(() => new THREE.Vector2(0.0004, 0.0005), []);
 
   return (
     <div
@@ -170,24 +175,29 @@ export default function ThreeDPosterWebGL({
       >
         {!isBackdrop && <CameraParallax />}
 
-        <ambientLight intensity={0.35} color="#9b8fc4" />
+        {/* Chất liệu đổi từ kim loại sẫm sang thạch cao trắng, albedo tăng khoảng
+            chín lần, nên toàn bộ giàn đèn phải hạ xuống theo. Giữ nguyên số cũ thì
+            mọi mặt hướng sáng đều cháy thành mảng trắng phẳng, mất hết nếp khối. */}
+        <ambientLight intensity={0.25} color="#9b8fc4" />
 
         {/* Đèn chính đứng yên, gần trắng, đánh chéo từ trên phải phía trước */}
         <spotLight
           position={[6, 7, 9]}
           angle={0.55}
           penumbra={0.85}
-          intensity={9}
+          // Đèn điểm suy giảm theo bình phương khoảng cách; đứng cách gốc gần 13
+          // đơn vị nên cần số lớn mới thành đèn chính thật sự.
+          intensity={90}
           castShadow={!isBackdrop}
           shadow-mapSize={[2048, 2048]}
           color={KEY}
         />
 
         {/* Đèn bù phía đối diện, yếu, để nửa khuất không rơi vào đen đặc */}
-        <directionalLight position={[-8, 1, 4]} intensity={2.6} color={FILL} />
+        <directionalLight position={[-8, 1, 4]} intensity={0.65} color={FILL} />
 
         {/* Đèn viền sau tách khối khỏi nền lavender vốn cũng sáng */}
-        <directionalLight position={[0, 5, -10]} intensity={3.2} color={RIM_LILAC} />
+        <directionalLight position={[0, 5, -10]} intensity={1.4} color={RIM_LILAC} />
 
         <RimRig />
 
@@ -195,21 +205,22 @@ export default function ThreeDPosterWebGL({
           {/* Không đặt background để thấy khối cầu nền phía sau Canvas */}
 
           {/* Tấm sáng lớn phía trên là nguồn phản chiếu chính của bề mặt bóng */}
-          <Lightformer form="rect" intensity={4} position={[0, 6, 2]} rotation-x={Math.PI / 2} scale={[14, 8, 1]} color={KEY} />
+          <Lightformer form="rect" intensity={2.5} position={[0, 6, 2]} rotation-x={Math.PI / 2} scale={[14, 8, 1]} color={KEY} />
           <Lightformer form="rect" intensity={2.2} position={[-7, 1, -2]} rotation-y={Math.PI / 2} scale={[10, 8, 1]} color={RIM_LILAC} />
           <Lightformer form="rect" intensity={1.6} position={[7, 1, -2]} rotation-y={-Math.PI / 2} scale={[10, 8, 1]} color={RIM_PINK} />
-          <Lightformer form="circle" intensity={5} position={[3, 4, 6]} scale={2.5} color={KEY} />
+          <Lightformer form="circle" intensity={3} position={[3, 4, 6]} scale={2.5} color={KEY} />
           <Lightformer form="rect" intensity={1} position={[0, -6, 2]} rotation-x={-Math.PI / 2} scale={[12, 6, 1]} color={FILL} />
         </Environment>
 
-        <CharacterModel baseScale={isBackdrop ? 7.5 : 8.5} />
+        {/* 4,0 × 1,876 ≈ 7,5 đơn vị, chiếm khoảng 90% chiều cao khung hình */}
+        <CharacterModel baseScale={isBackdrop ? 3.4 : 4.0} />
 
         {!isBackdrop && (
           <Sparkles count={60} scale={[14, 14, 14]} size={2} speed={0.22} opacity={0.28} color="#ffffff" />
         )}
 
         <ContactShadows
-          position={[0, -5.5, 0]}
+          position={[0, -4.4, 0]}
           opacity={0.9}
           scale={20}
           blur={2}
