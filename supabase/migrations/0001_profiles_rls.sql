@@ -1,8 +1,19 @@
 -- ============================================================================
--- Nexus — bảng profiles, tự sinh hồ sơ khi đăng ký, và khoá quyền bằng RLS
+-- [ĐÃ BỊ THAY THẾ — ĐỪNG CHẠY FILE NÀY]
 --
--- Chạy trong Supabase SQL Editor. An toàn khi chạy lại nhiều lần, và không
--- xoá dữ liệu sẵn có.
+-- File này chưa bao giờ được chạy trọn vẹn trên cơ sở dữ liệu thật. Phần
+-- bảng và cột đã được tạo tay trước đó; phần bảo mật thì 0002 làm lại đầy
+-- đủ hơn và đã chạy thành công.
+--
+-- Giữ lại để đối chiếu, không xoá — lịch sử migration là bản ghi việc đã
+-- xảy ra, xoá đi thì sau này không ai hiểu vì sao cơ sở dữ liệu lại ra
+-- hình dạng hiện tại.
+--
+-- Xem supabase/migrations/README.md để biết file nào thực sự đã chạy.
+-- ============================================================================
+
+-- ============================================================================
+-- Nexus — bảng profiles, tự sinh hồ sơ khi đăng ký, và khoá quyền bằng RLS
 -- ============================================================================
 
 -- ---------------------------------------------------------------------------
