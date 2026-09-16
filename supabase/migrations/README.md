@@ -12,7 +12,8 @@ ghi ở đây. **Chạy xong file nào thì cập nhật bảng này ngay.**
 |---|---|---|
 | `0001_profiles_rls.sql` | ❌ Không chạy | Đã bị `0002` thay thế. Đừng chạy. |
 | `0002_profiles_policy_reset.sql` | ✅ 16.09.2026 | Kết quả: 2 policy, is_admin có, trigger chặn nâng quyền có |
-| `0003_backfill_full_name.sql` | ⬜ Chưa | |
+| `0003_backfill_full_name.sql` | ⬜ Chưa | Không còn cần gấp: hai tài khoản hiện tại tạo bằng nút Add user nên `auth.users` không có tên để chép sang. Vẫn hữu ích cho tài khoản đăng ký qua trang web. |
+| `0004_bao_dam_ho_so.sql` | ⬜ Chưa | **Cần chạy.** Dựng trigger sinh hồ sơ mà `0002` không có, bù hồ sơ cho hai tài khoản mới, chỉ định admin. Sửa email ở mục 4 trước khi chạy. |
 
 Ngoài ra có một số câu SQL từng gõ tay thẳng vào SQL Editor, không qua file:
 thêm cột `email` vào `profiles`, chép email từ `auth.users`, và đặt
