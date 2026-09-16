@@ -1,8 +1,7 @@
 "use client";
-
-import { useRef, useState, useEffect, useMemo } from "react";
+import React, { useRef, useState, useMemo, useEffect } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { Environment, Lightformer, Float, ContactShadows, Sparkles, useGLTF } from "@react-three/drei";
+import { Environment, Lightformer, Float, ContactShadows, Sparkles, useGLTF, Center } from "@react-three/drei";
 import { EffectComposer, Bloom, ChromaticAberration, Vignette } from "@react-three/postprocessing";
 import * as THREE from "three";
 
@@ -29,40 +28,38 @@ function upgradeMaterials(scene: THREE.Object3D) {
     if (child.userData.nxUpgraded) return;
     child.userData.nxUpgraded = true;
 
-    const old = child.material as THREE.MeshStandardMaterial;
+    const upgradeSingleMaterial = (old: any) => {
+      const next = new THREE.MeshPhysicalMaterial({
+        color: new THREE.Color("#e8e6e1"), // Màu trắng ngà thạch cao
+        metalness: 0.05,                   // Không mang tính kim loại
+        roughness: 0.9,                    // Nhám mờ, không bóng bẩy
+        envMapIntensity: 0.4,              // Bắt sáng môi trường vừa phải
+        clearcoat: 0,                      // Loại bỏ lớp phủ bóng
+      });
 
-    const next = new THREE.MeshPhysicalMaterial({
-      color: new THREE.Color("#1a1a24"),
-      metalness: 0.88,
-      roughness: 0.24,
-      envMapIntensity: 1.5,
-      clearcoat: 1,
-      clearcoatRoughness: 0.16,
-      // Ngũ sắc để hết cỡ cộng với normal map của model sinh ra đám lốm đốm
-      // cầu vồng trông như nhiễu. Hạ xuống vừa phải thì còn ánh chuyển sắc
-      // mà bề mặt vẫn đọc ra là một khối liền.
-      iridescence: 0.45,
-      iridescenceIOR: 1.4,
-      iridescenceThicknessRange: [220, 620],
-    });
+      if (old) {
+        next.normalMap = old.normalMap ?? null;
+        // Bỏ qua roughness map và metalness map cũ để giữ độ nhám tuyệt đối của thạch cao
+        next.aoMap = old.aoMap ?? null;
+        if (typeof old.dispose === 'function') old.dispose();
+      }
+      return next;
+    };
 
-    if (old) {
-      next.normalMap = old.normalMap ?? null;
-      next.roughnessMap = old.roughnessMap ?? null;
-      next.metalnessMap = old.metalnessMap ?? null;
-      next.aoMap = old.aoMap ?? null;
-      old.dispose();
+    if (Array.isArray(child.material)) {
+      child.material = child.material.map(upgradeSingleMaterial);
+    } else {
+      child.material = upgradeSingleMaterial(child.material);
     }
-
-    child.material = next;
   });
 }
 
 function CharacterModel({ baseScale }: { baseScale: number }) {
   const groupRef = useRef<THREE.Group>(null);
+  const mouseRotRef = useRef({ x: 0, y: 0 });
   const [hovered, setHover] = useState(false);
 
-  const { scene } = useGLTF("/model/base_basic_pbr.glb");
+  const { scene } = useGLTF("/model/fractured.glb");
 
   useEffect(() => {
     if (scene) upgradeMaterials(scene);
@@ -73,18 +70,18 @@ function CharacterModel({ baseScale }: { baseScale: number }) {
     if (!g) return;
 
     const t = state.clock.elapsedTime;
+    
+    // Xoay 360 độ liên tục đều đặn theo thời gian
+    const autoRotate = t * 0.35;
+    
+    // Tính toán độ nghiêng dựa trên vị trí chuột (tương tác chuột)
+    // Tăng tốc độ nội suy (damp) lên 5.0 để phản hồi chuột nhanh nhạy và mượt mà nhất
+    mouseRotRef.current.x = THREE.MathUtils.damp(mouseRotRef.current.x, state.pointer.x * 1.5, 5.0, delta);
+    mouseRotRef.current.y = THREE.MathUtils.damp(mouseRotRef.current.y, -state.pointer.y * 0.5, 5.0, delta);
 
-    // Trôi nhẹ khi không ai đụng tới, cộng với hướng nhìn bám theo con trỏ.
-    // Bám cả khi chưa rê vào model, nếu đợi hover mới phản hồi thì lúc chuột
-    // đi ngang qua sẽ thấy nó giật một cái.
-    const idle = Math.sin(t * 0.18) * 0.14;
-    const aimY = idle + state.pointer.x * 0.40;
-    const aimX = -state.pointer.y * 0.24;
-
-    // damp giảm chấn theo delta nên tốc độ chuyển động không đổi giữa máy
-    // 60fps và máy 144fps; lerp với hệ số cố định thì máy nhanh sẽ chạy nhanh hơn.
-    g.rotation.y = THREE.MathUtils.damp(g.rotation.y, aimY, 2.4, delta);
-    g.rotation.x = THREE.MathUtils.damp(g.rotation.x, aimX, 2.4, delta);
+    // Cộng thẳng góc xoay gốc và offset chuột, loại bỏ hoàn toàn hiện tượng giật lag
+    g.rotation.y = autoRotate + mouseRotRef.current.x;
+    g.rotation.x = mouseRotRef.current.y;
 
     const targetScale = hovered ? baseScale * 1.05 : baseScale;
     const nextScale = THREE.MathUtils.damp(g.scale.x, targetScale, 3.5, delta);
@@ -97,10 +94,12 @@ function CharacterModel({ baseScale }: { baseScale: number }) {
         ref={groupRef}
         onPointerOver={() => setHover(true)}
         onPointerOut={() => setHover(false)}
-        position={[0, -6, 0]}
         scale={baseScale}
+        position={[0, -3.5, 0]} // Căn đầu vào giữa khung hình, đế chìm hoàn toàn
       >
-        <primitive object={scene} />
+        <Center>
+          <primitive object={scene} />
+        </Center>
       </group>
     </Float>
   );
@@ -203,7 +202,7 @@ export default function ThreeDPosterWebGL({
           <Lightformer form="rect" intensity={1} position={[0, -6, 2]} rotation-x={-Math.PI / 2} scale={[12, 6, 1]} color={FILL} />
         </Environment>
 
-        <CharacterModel baseScale={isBackdrop ? 11 : 15} />
+        <CharacterModel baseScale={isBackdrop ? 7.5 : 8.5} />
 
         {!isBackdrop && (
           <Sparkles count={60} scale={[14, 14, 14]} size={2} speed={0.22} opacity={0.28} color="#ffffff" />
@@ -221,8 +220,7 @@ export default function ThreeDPosterWebGL({
 
         {!isBackdrop && (
           <EffectComposer enableNormalPass={false} multisampling={8}>
-            <Bloom luminanceThreshold={0.78} mipmapBlur intensity={0.7} radius={0.6} />
-            <ChromaticAberration offset={aberration} />
+            <Bloom luminanceThreshold={0.8} mipmapBlur intensity={0.3} radius={0.2} />
             <Vignette eskil={false} offset={0.15} darkness={1.05} />
           </EffectComposer>
         )}
