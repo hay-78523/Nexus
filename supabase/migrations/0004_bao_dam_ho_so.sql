@@ -14,13 +14,16 @@
 -- Chuyện này im lặng cho tới khi có tài khoản mới: đăng nhập thì được, nhưng
 -- middleware đọc bảng profiles không thấy dòng nào nên xếp người dùng vào
 -- quyền thấp nhất. Đây đúng là triệu chứng "đăng nhập admin vẫn ra user" đã
--- gặp trước đây. Hai tài khoản vừa tạo lại trên bảng điều khiển Supabase rơi
--- đúng vào tình huống này.
+-- gặp trước đây.
+--
+-- Tài khoản admin không bị ảnh hưởng vì nó có từ trước và đã có hồ sơ. Tài
+-- khoản mới tạo cho Thịnh thì rơi đúng vào lỗ hổng này.
 --
 -- RỦI RO
 -- Thấp. Không xoá gì, không đụng tới dữ liệu đang có. Phần bù hồ sơ chỉ chèn
--- cho tài khoản chưa có dòng nào. Phần nâng quyền admin có ghi đè cột role,
--- nên phải sửa đúng email ở mục 4 trước khi chạy.
+-- cho tài khoản chưa có dòng nào, nên hồ sơ admin đang có vẫn nguyên vẹn.
+-- Phần nâng quyền admin có ghi đè cột role, nên phải sửa đúng email ở mục 4
+-- trước khi chạy.
 --
 -- An toàn khi chạy lại nhiều lần.
 -- ============================================================================
@@ -84,7 +87,8 @@ create trigger on_auth_user_created
 -- 3. Bù hồ sơ cho tài khoản đã tồn tại
 --
 -- Chỉ chèn cho tài khoản chưa có dòng nào trong profiles. Ai đã có hồ sơ thì
--- không bị đụng tới, kể cả cột role.
+-- không bị đụng tới, kể cả cột role — nên hồ sơ admin hiện tại vẫn y nguyên.
+-- Thực tế lần chạy này chỉ có tài khoản của Thịnh được chèn.
 -- ---------------------------------------------------------------------------
 
 insert into public.profiles (id, email, full_name, phone_number, role)
@@ -104,6 +108,9 @@ select u.id,
 --
 -- Mọi tài khoản khác bị hạ về 'user'. Làm vậy là cố ý: nó bảo đảm chỉ có đúng
 -- một admin, thay vì để sót quyền admin trên một tài khoản cũ nào đó.
+--
+-- Mệnh đề where cuối làm câu lệnh chỉ ghi vào dòng nào thực sự sai quyền.
+-- admin@nexus.com vốn đã mang quyền admin nên sẽ không bị đụng tới.
 -- ---------------------------------------------------------------------------
 
 update public.profiles
@@ -115,12 +122,22 @@ update public.profiles
 -- 5. Điền tên hiển thị
 --
 -- Tài khoản tạo bằng nút Add user không kèm tên nên cột full_name trống, và
--- trang quản trị sẽ hiện ô trống. Sửa hai dòng dưới cho đúng tên rồi bỏ dấu
--- chú thích. Bỏ qua mục này cũng không sao, ứng dụng vẫn chạy.
+-- trang quản trị sẽ hiện ô trống.
+--
+-- Chỉ ghi khi ô tên đang trống, nên chạy lại nhiều lần cũng không đè lên tên
+-- mà người dùng tự sửa sau này trong ứng dụng.
 -- ---------------------------------------------------------------------------
 
--- update public.profiles set full_name = 'Quan tri' where email = 'admin@nexus.com';
--- update public.profiles set full_name = 'Thinh'    where email = 'thinh123@gmail.com';
+update public.profiles
+   set full_name = 'Thịnh'
+ where email = 'thinh123@gmail.com'
+   and (full_name is null or full_name = '');
+
+-- Tên cho tài khoản quản trị: sửa rồi bỏ dấu chú thích nếu muốn điền.
+-- update public.profiles
+--    set full_name = 'Quản trị'
+--  where email = 'admin@nexus.com'
+--    and (full_name is null or full_name = '');
 
 -- ---------------------------------------------------------------------------
 -- 6. Kiểm tra lại sau khi chạy
