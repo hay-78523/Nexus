@@ -25,7 +25,7 @@ export default function AuthForm({ error }: { error?: string }) {
             type="email" 
             required 
             className="border-b border-white/15 bg-transparent px-0 py-2.5 font-mono text-white transition-colors placeholder:text-white/20 focus:border-acid focus:outline-none"
-            placeholder="ten@starlight.vn"
+            placeholder="email@cua-ban.com"
           />
         </div>
         

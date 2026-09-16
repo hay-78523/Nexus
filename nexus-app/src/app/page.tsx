@@ -159,7 +159,7 @@ export default function LandingPage() {
       <footer className="border-t border-white/10">
         <div className="mx-auto flex max-w-[1600px] flex-col gap-2 px-5 py-8 text-[10px] font-bold uppercase tracking-[0.25em] text-white/40 md:flex-row md:justify-between md:px-8">
           <span>Nexus — AI Batch Generation</span>
-          <span>Entertainment 2020</span>
+          <span>Bản dùng riêng</span>
         </div>
       </footer>
     </div>
