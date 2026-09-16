@@ -43,7 +43,12 @@ export default function AIGenerator() {
       })
 
       const data = await response.json()
-      if (!response.ok) throw new Error(data.error || 'Không sinh được ảnh')
+      if (!response.ok) {
+        // Máy chủ đính kèm nguyên văn phản hồi của Fal.ai khi gọi hỏng.
+        // Hiện ra luôn, vì đó thường là chỗ nói rõ sai tên trường nào.
+        const detail = typeof data.falResponse === 'string' ? data.falResponse : ''
+        throw new Error([data.error || 'Không sinh được ảnh', detail].filter(Boolean).join('\n\n'))
+      }
 
       setResultImage(data.imageUrl)
     } catch (err: unknown) {
@@ -105,7 +110,7 @@ export default function AIGenerator() {
         {error && (
           <p
             role="alert"
-            className="border-l-2 border-red-500 bg-red-500/10 px-4 py-3 font-mono text-xs text-red-300"
+            className="max-h-48 overflow-y-auto border-l-2 border-red-500 bg-red-500/10 px-4 py-3 font-mono text-xs whitespace-pre-wrap break-words text-red-300"
           >
             {error}
           </p>
