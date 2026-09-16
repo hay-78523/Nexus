@@ -1,0 +1,45 @@
+# Chạy mỗi khi đẩy code lên main hoặc mở pull request.
+# Mục đích: chặn việc đẩy lên code không build được — chuyện đã từng xảy ra.
+name: Kiem tra ma nguon
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Đẩy liên tiếp thì huỷ lượt chạy cũ, chỉ giữ lượt mới nhất
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Lint va build
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: nexus-app
+
+    steps:
+      - name: Lay ma nguon
+        uses: actions/checkout@v4
+
+      - name: Cai Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: nexus-app/package-lock.json
+
+      # npm ci cai dung theo package-lock, khong tu nang phien ban
+      - name: Cai thu vien
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      # Build khong can khoa Supabase: cac trang goi database deu la
+      # dynamic nen khong cham toi env luc build. Da kiem chung.
+      - name: Build
+        run: npm run build
