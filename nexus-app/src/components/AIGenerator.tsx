@@ -90,6 +90,15 @@ export default function AIGenerator({
   const [canhs, setCanhs] = useState<Canh[]>([])
   const [error, setError] = useState<string | null>(null)
 
+  /**
+   * Ô ảnh vừa được nút nối tiếp ghi vào, giữ lại vài giây để làm sáng viền.
+   *
+   * Có mốc thời gian đi kèm vì bấm lại đúng ô cũ vẫn phải sáng lên lần nữa;
+   * chỉ giữ mỗi tên ô thì React thấy giá trị không đổi và bỏ qua.
+   */
+  const [vuaNoi, setVuaNoi] = useState<{ key: SlotKey; at: number } | null>(null)
+  const thamChieuRef = useRef<HTMLDivElement>(null)
+
   // Hai ô chữ đều tự cao theo nội dung. Prompt cho phong cách này thường dài
   // bốn năm trăm ký tự; nhốt trong ô cố định thì phải cuộn trong lúc gõ.
   const promptRef = useRef<HTMLTextAreaElement>(null)
@@ -101,6 +110,12 @@ export default function AIGenerator({
       el.style.height = `${Math.min(el.scrollHeight, 460)}px`
     }
   }, [prompt, danhSachCanh])
+
+  useEffect(() => {
+    if (!vuaNoi) return
+    const t = setTimeout(() => setVuaNoi(null), 2600)
+    return () => clearTimeout(t)
+  }, [vuaNoi])
 
   const setSlot = (key: SlotKey, value: SlotValue | null) => {
     setSlots((prev) => {
@@ -115,10 +130,18 @@ export default function AIGenerator({
   const pickFile = (key: SlotKey, file: File | null) =>
     setSlot(key, file ? { kind: 'file', file, preview: URL.createObjectURL(file) } : null)
 
-  /** Lấy một ảnh vừa sinh ra làm tham chiếu cho lượt kế tiếp. */
+  /**
+   * Lấy một ảnh vừa sinh ra làm tham chiếu cho lượt kế tiếp.
+   *
+   * Cuộn tới đúng khung ảnh tham chiếu chứ không nhảy lên đầu trang. Khung đó
+   * nằm ở mục 04, gần cuối cột nhập; nhảy lên đầu trang là kéo người bấm ra xa
+   * đúng chỗ vừa thay đổi, nên nhìn như chẳng có gì xảy ra. Viền ô sáng lên
+   * vài giây để thấy ảnh rơi vào ô nào.
+   */
   const continueFrom = (url: string, key: SlotKey) => {
     setSlot(key, { kind: 'url', url, preview: url })
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+    setVuaNoi({ key, at: Date.now() })
+    thamChieuRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
   }
 
   /** Dựng phần ảnh tham chiếu gửi kèm, dùng chung cho mọi cảnh trong một lượt. */
@@ -256,6 +279,7 @@ export default function AIGenerator({
   const tongAnh = soLuotChay * numImages
   const ready = Boolean(prompt.trim() || soCanh > 0)
   const soAnhDaChon = SLOTS.filter(({ key }) => slots[key]).length
+  const soAnhNoiTiep = SLOTS.filter(({ key }) => slots[key]?.kind === 'url').length
   const soXong = canhs.filter((c) => c.trangThai === 'xong').length
   const soLoi = canhs.filter((c) => c.trangThai === 'loi').length
 
@@ -348,18 +372,40 @@ export default function AIGenerator({
           label="Ảnh tham chiếu"
           note={soAnhDaChon > 0 ? `Đã chọn ${soAnhDaChon}` : 'Tuỳ chọn'}
         >
-          <div className="grid grid-cols-3 gap-3">
+          <div ref={thamChieuRef} className="grid grid-cols-3 gap-3 scroll-mt-24">
             {SLOTS.map(({ key, label, note }) => (
               <ImageSlot
                 key={key}
                 label={label}
                 note={note}
                 value={slots[key]}
+                vuaNoi={vuaNoi?.key === key}
                 onPick={(file) => pickFile(key, file)}
                 onClear={() => setSlot(key, null)}
               />
             ))}
           </div>
+
+          {/* Nói thẳng ra là ảnh đã vào ô. Nút nối tiếp nằm ở cột kết quả, cách
+              chỗ này một quãng, nên nếu không có dòng này thì bấm xong không
+              biết có ăn thua gì không. */}
+          {soAnhNoiTiep > 0 && (
+            <p className="border-l-2 border-acid bg-acid/10 px-3 py-2 font-mono text-[10px] leading-relaxed text-acid">
+              Đang nối tiếp từ {soAnhNoiTiep} ảnh vừa sinh. Bấm{' '}
+              <b>{soCanh > 1 ? `Chạy ${soCanh} cảnh` : 'Chạy AI'}</b> thì lượt sau lấy ảnh này làm
+              gốc.
+              {demo && (
+                <>
+                  {' '}
+                  <span className="text-amber-300">
+                    Nhưng chế độ thử sinh ảnh thuần từ chữ, không nhìn ảnh tham chiếu — muốn thấy
+                    nối tiếp thật thì phải gắn FAL_KEY.
+                  </span>
+                </>
+              )}
+            </p>
+          )}
+
           <p className="font-mono text-[10px] leading-relaxed text-white/30">
             Bấm để chọn file, hoặc bấm vào ô rồi <b className="text-white/60">Ctrl+V</b> để dán
             ảnh từ bộ nhớ tạm. Dùng chung cho mọi cảnh trong lượt.
@@ -544,12 +590,15 @@ function ImageSlot({
   label,
   note,
   value,
+  vuaNoi,
   onPick,
   onClear,
 }: {
   label: string
   note: string
   value: SlotValue | null
+  /** Vừa nhận ảnh từ nút nối tiếp: làm sáng viền trong vài giây. */
+  vuaNoi: boolean
   onPick: (file: File | null) => void
   onClear: () => void
 }) {
@@ -574,7 +623,9 @@ function ImageSlot({
       <div
         tabIndex={0}
         onPaste={handlePaste}
-        className="group relative aspect-square w-full overflow-hidden border border-dashed border-white/20 bg-black transition-colors hover:border-acid/60 focus:border-acid focus:outline-none"
+        className={`group relative aspect-square w-full overflow-hidden border border-dashed bg-black transition-all hover:border-acid/60 focus:border-acid focus:outline-none ${
+          vuaNoi ? 'border-acid ring-2 ring-acid' : 'border-white/20'
+        }`}
       >
         <input
           type="file"
@@ -703,15 +754,17 @@ function ResultTile({
             đi dưới dạng đường dẫn nên không đụng trần kích thước. */}
         <button
           onClick={() => onContinue('character')}
+          title="Đưa tấm này vào ô Nhân vật ở mục 04 để lượt sau giữ nguyên nhân vật"
           className="border border-acid bg-black/80 px-2 py-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.1em] text-acid transition-colors hover:bg-acid hover:text-black"
         >
-          Nối tiếp
+          → Ô nhân vật
         </button>
         <button
           onClick={() => onContinue('style')}
+          title="Đưa tấm này vào ô Phong cách ở mục 04 để lượt sau vẽ cùng kiểu"
           className="border border-white/30 bg-black/80 px-2 py-1.5 font-mono text-[10px] uppercase tracking-[0.1em] text-white/70 transition-colors hover:border-white hover:text-white"
         >
-          Làm style
+          → Ô phong cách
         </button>
         <button
           onClick={download}
