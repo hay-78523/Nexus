@@ -3,12 +3,16 @@
 import { useState } from 'react'
 
 /**
- * Ba loại ảnh tham chiếu theo mục 3 của bản mô tả chức năng. Chỉ ảnh nhân vật
- * là bắt buộc; hai loại còn lại chỉ được gửi đi khi máy chủ đã biết tên trường
+ * Ba loại ảnh tham chiếu theo mục 3 của bản mô tả chức năng.
+ *
+ * Cả ba đều tuỳ chọn. Phần lớn cảnh được tả hoàn toàn bằng chữ; ảnh chỉ dùng
+ * khi cần khoá một nhân vật đã dựng ở lượt trước cho giống nhau qua các cảnh.
+ *
+ * Ô phong cách và dáng chỉ thực sự được gửi đi khi máy chủ đã biết tên trường
  * tương ứng của model đang dùng.
  */
 const SLOTS = [
-  { key: 'character', label: 'Nhân vật', note: 'Bắt buộc' },
+  { key: 'character', label: 'Nhân vật', note: 'Tuỳ chọn' },
   { key: 'style', label: 'Phong cách', note: 'Tuỳ chọn' },
   { key: 'pose', label: 'Dáng / bố cục', note: 'Tuỳ chọn' },
 ] as const
@@ -85,8 +89,8 @@ export default function AIGenerator({
   }
 
   const handleGenerate = async () => {
-    if (!prompt || !slots.character) {
-      setError('Cần ảnh nhân vật và mô tả trước khi chạy.')
+    if (!prompt) {
+      setError('Cần nhập mô tả cảnh trước khi chạy.')
       return
     }
 
@@ -164,13 +168,13 @@ export default function AIGenerator({
     }
   }
 
-  const ready = Boolean(slots.character && prompt)
+  const ready = Boolean(prompt)
 
   return (
     <div className="grid grid-cols-1 gap-px overflow-hidden border border-white/10 bg-white/10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
       {/* ---------- CỘT NHẬP ---------- */}
       <div className="flex flex-col gap-8 bg-ink-panel p-6 md:p-8">
-        <Field index="01" label="Ảnh tham chiếu" note="Giữ nhân vật">
+        <Field index="01" label="Ảnh tham chiếu" note="Tuỳ chọn">
           <div className="grid grid-cols-3 gap-3">
             {SLOTS.map(({ key, label, note }) => (
               <ImageSlot
@@ -189,7 +193,7 @@ export default function AIGenerator({
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
             className="h-28 w-full resize-none border border-white/15 bg-black p-4 font-mono text-sm text-white transition-colors placeholder:text-white/25 focus:border-acid focus:outline-none"
-            placeholder="Chân dung điện ảnh, ánh sáng neon xanh chanh, nền tối, độ nét cao"
+            placeholder="2D cartoon illustration, thick bold black outlines, flat colors, businesswoman walking through a door, rising arrow chart, no text"
           />
         </Field>
 

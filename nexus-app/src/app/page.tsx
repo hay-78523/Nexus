@@ -6,9 +6,9 @@ import Reveal from '@/components/nx/Reveal'
 const STEPS = [
   {
     index: '01',
-    title: 'Tải một tấm ảnh',
-    body: 'Một ảnh chân dung sắc nét là đủ. Không cần huấn luyện mô hình, không cần máy cấu hình cao.',
-    meta: '~5 giây',
+    title: 'Tả nhân vật một lần',
+    body: 'Khai nhân vật và phong cách ở đầu, hoặc thả vào một ảnh mẫu. Không cần huấn luyện mô hình, không cần máy cấu hình cao.',
+    meta: '~1 phút',
   },
   {
     index: '02',
@@ -39,8 +39,8 @@ export default function LandingPage() {
               Nexus
             </Link>
             <p className="max-w-[380px] text-[15px] leading-snug text-white/75 md:text-base">
-              Nền tảng sinh ảnh AI hàng loạt, giữ nguyên khuôn mặt và phong cách chỉ từ
-              một tấm ảnh mẫu.
+              Nền tảng sinh ảnh AI hàng loạt, giữ nguyên nhân vật và phong cách qua
+              hàng trăm cảnh.
             </p>
           </div>
 
@@ -85,7 +85,7 @@ export default function LandingPage() {
 
       {/* ---------- DẢI CHỮ CHẠY ---------- */}
       <Marquee
-        text="GIỮ MẶT · GIỮ PHONG CÁCH · SINH HÀNG LOẠT ·"
+        text="GIỮ NHÂN VẬT · GIỮ PHONG CÁCH · SINH HÀNG LOẠT ·"
         className="border-y border-white/10 py-7 text-4xl font-black uppercase leading-[1.25] tracking-[-0.02em] text-white/15 md:text-6xl"
       />
 

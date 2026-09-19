@@ -52,7 +52,7 @@ export default async function LoginPage({
       </main>
 
       <Marquee
-        text="AI BATCH GENERATION · GIỮ MẶT · GIỮ PHONG CÁCH ·"
+        text="AI BATCH GENERATION · GIỮ NHÂN VẬT · GIỮ PHONG CÁCH ·"
         className="relative z-10 border-t border-white/10 py-3 font-mono text-[11px] uppercase tracking-[0.3em] text-white/20"
       />
     </div>
