@@ -31,6 +31,13 @@ type Slots = Record<SlotKey, SlotValue | null>
 
 const EMPTY_SLOTS: Slots = { character: null, style: null, pose: null }
 
+/**
+ * Trần kích thước cho các ảnh nhúng thẳng vào yêu cầu. Phải khớp với
+ * MAX_TOTAL_CHARS ở máy chủ, và tồn tại ở đây để báo lỗi bằng tiếng Việt tử tế
+ * trước khi Vercel kịp cắt yêu cầu bằng một dòng chữ thuần.
+ */
+const MAX_EMBEDDED_CHARS = 4_000_000
+
 /** Đọc một file thành chuỗi base64 để gửi kèm trong thân yêu cầu. */
 function toBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -95,24 +102,54 @@ export default function AIGenerator({
         images[key] = slot.kind === 'file' ? await toBase64(slot.file) : slot.url
       }
 
+      // Chặn ảnh quá lớn NGAY Ở ĐÂY, trước khi gửi đi. Vercel cắt yêu cầu lớn
+      // hơn khoảng 4,5MB ngay tại cổng vào, trước cả khi mã của mình chạy, và
+      // nó trả về một dòng chữ thuần chứ không phải JSON — nên lớp kiểm tra ở
+      // máy chủ không bao giờ có cơ hội báo lỗi cho tử tế.
+      const embeddedChars = Object.values(images)
+        .filter((v) => v.startsWith('data:'))
+        .reduce((sum, v) => sum + v.length, 0)
+      if (embeddedChars > MAX_EMBEDDED_CHARS) {
+        const mb = (embeddedChars / 1_400_000).toFixed(1)
+        throw new Error(
+          `Ảnh quá lớn (khoảng ${mb}MB). Tổng các ảnh tải lên phải dưới 3MB.\n\n` +
+            'Thu nhỏ ảnh rồi thử lại. Ảnh lấy từ nút Nối tiếp thì không tính vào ' +
+            'giới hạn này, vì nó gửi đi dưới dạng đường dẫn.'
+        )
+      }
+
       const response = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prompt, images, model, numImages }),
       })
 
-      const data = await response.json()
+      // Đọc dạng chữ trước rồi mới phân tích. Khi hạ tầng chặn yêu cầu, nó trả
+      // về chữ thuần; gọi thẳng response.json() sẽ ném ra lỗi cú pháp khó hiểu
+      // che mất nguyên nhân thật.
+      const raw = await response.text()
+      let data: Record<string, unknown>
+      try {
+        data = JSON.parse(raw)
+      } catch {
+        throw new Error(
+          response.status === 413
+            ? 'Ảnh quá lớn, máy chủ từ chối nhận. Thu nhỏ ảnh rồi thử lại.'
+            : `Máy chủ trả về phản hồi không đọc được (HTTP ${response.status}).\n\n${raw.slice(0, 500)}`
+        )
+      }
       if (!response.ok) {
         // Máy chủ đính kèm nguyên văn phản hồi của Fal.ai và tên các trường
         // đang dùng. Hiện hết ra, vì đó là chỗ nói rõ sai ở đâu.
-        const parts = [data.error || 'Không sinh được ảnh']
-        if (data.fieldsUsed) {
+        const parts = [String(data.error || 'Không sinh được ảnh')]
+        const f = data.fieldsUsed as Record<string, string> | undefined
+        if (f) {
           parts.push(
-            `Đang gọi: ${data.fieldsUsed.model}\n` +
-              `Trường nhân vật: ${data.fieldsUsed.nhanVat}\n` +
-              `Trường phong cách: ${data.fieldsUsed.phongCach}\n` +
-              `Trường dáng: ${data.fieldsUsed.dang}\n` +
-              `Trường số lượng: ${data.fieldsUsed.soLuong}`
+            `Đang gọi: ${f.model}\n` +
+              `Trường nhân vật: ${f.nhanVat}\n` +
+              `Trường phong cách: ${f.phongCach}\n` +
+              `Trường dáng: ${f.dang}\n` +
+              `Trường số lượng: ${f.soLuong}`
           )
         }
         if (typeof data.falResponse === 'string') parts.push(data.falResponse)
