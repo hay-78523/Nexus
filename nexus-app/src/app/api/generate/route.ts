@@ -9,6 +9,7 @@ import {
   MAX_NUM_IMAGES,
   MAX_TOTAL_CHARS,
   allowedModels,
+  IMAGE_AS_ARRAY,
   DEMO_MODE,
   demoImageUrls,
 } from '@/lib/fal'
@@ -178,20 +179,28 @@ export async function POST(request: Request) {
   }
 
   // --- 5. Dựng thân yêu cầu gửi sang Fal.ai -----------------------------
-  const payload: Record<string, unknown> = {
-    prompt,
-    [CHARACTER_FIELD]: images.character,
+  const payload: Record<string, unknown> = { prompt }
+
+  const anhDangCo = [images.character, images.style, images.pose].filter(Boolean)
+
+  if (IMAGE_AS_ARRAY) {
+    // Model gom mọi ảnh vào một trường dạng mảng và tự hiểu vai trò từng tấm
+    // qua câu mô tả. Không gửi trường rỗng: mảng rỗng cũng làm một số model
+    // từ chối.
+    if (anhDangCo.length > 0) payload[CHARACTER_FIELD] = anhDangCo
+  } else {
+    if (images.character) payload[CHARACTER_FIELD] = images.character
+    if (STYLE_FIELD && images.style) payload[STYLE_FIELD] = images.style
+    if (POSE_FIELD && images.pose) payload[POSE_FIELD] = images.pose
   }
-  if (STYLE_FIELD && images.style) payload[STYLE_FIELD] = images.style
-  if (POSE_FIELD && images.pose) payload[POSE_FIELD] = images.pose
   if (NUM_IMAGES_FIELD && numImages > 1) payload[NUM_IMAGES_FIELD] = numImages
 
   // Tên trường đang dùng, trả kèm mọi lỗi để đoán được ngay sai ở đâu.
   const fieldsUsed = {
     model,
-    nhanVat: CHARACTER_FIELD,
-    phongCach: STYLE_FIELD || '(chưa cấu hình)',
-    dang: POSE_FIELD || '(chưa cấu hình)',
+    nhanVat: IMAGE_AS_ARRAY ? `${CHARACTER_FIELD} (mảng, ${anhDangCo.length} ảnh)` : CHARACTER_FIELD,
+    phongCach: IMAGE_AS_ARRAY ? '(gộp vào mảng)' : STYLE_FIELD || '(chưa cấu hình)',
+    dang: IMAGE_AS_ARRAY ? '(gộp vào mảng)' : POSE_FIELD || '(chưa cấu hình)',
     soLuong: NUM_IMAGES_FIELD || '(chưa cấu hình)',
   }
 
