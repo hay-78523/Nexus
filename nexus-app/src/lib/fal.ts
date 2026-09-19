@@ -11,7 +11,18 @@
  * được model nào.
  */
 
-export const DEFAULT_MODEL = process.env.FAL_MODEL ?? 'fal-ai/ip-adapter-face-id'
+/**
+ * Model mặc định.
+ *
+ * Trước đây là ip-adapter-face-id, loại chuyên giữ khuôn mặt người thật. Sản
+ * phẩm đã chốt bỏ hướng đó, nên mặc định chuyển sang một model nhẹ, rẻ và làm
+ * tốt phong cách hoạt hình phẳng — đúng thứ sẽ dùng nhiều nhất.
+ *
+ * Chưa kiểm chứng được tên model này từ môi trường phát triển vì fal.ai bị
+ * chặn. Sai tên thì Fal.ai sẽ báo lại tên đúng, và đổi chỉ cần sửa biến
+ * FAL_MODEL, không phải sửa mã.
+ */
+export const DEFAULT_MODEL = process.env.FAL_MODEL ?? 'fal-ai/flux/schnell'
 export const CHARACTER_FIELD = process.env.FAL_IMAGE_FIELD ?? 'image_url'
 export const STYLE_FIELD = process.env.FAL_STYLE_FIELD ?? ''
 export const POSE_FIELD = process.env.FAL_POSE_FIELD ?? ''
@@ -59,7 +70,7 @@ export const DEMO_MODE = process.env.NEXUS_DEMO === '1'
  * Internet hay không.
  *
  * Lưu ý: đây là sinh ảnh từ chữ thuần tuý. Nó KHÔNG nhìn ảnh tham chiếu, nên
- * chỉ dùng để thử luồng chạy — không kết luận được gì về việc giữ khuôn mặt.
+ * chỉ dùng để thử luồng chạy — không kết luận được gì về việc giữ nhân vật.
  */
 export function demoImageUrls(prompt: string, count: number): string[] {
   const clean = encodeURIComponent(prompt.slice(0, 300))

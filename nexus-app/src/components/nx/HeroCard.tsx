@@ -86,7 +86,7 @@ export default function HeroCard() {
           01 // Nexus Engine
         </p>
         <p className="hidden max-w-[240px] text-right text-[11px] leading-relaxed text-white/65 md:block">
-          Giữ nguyên khuôn mặt và phong cách qua hàng trăm khung hình.
+          Giữ nguyên nhân vật và phong cách qua hàng trăm khung hình.
         </p>
       </div>
     </div>

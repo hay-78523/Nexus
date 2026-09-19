@@ -87,14 +87,14 @@ export default async function DashboardPage() {
               <span className="text-acid">hàng loạt</span>
             </h1>
             <p className="mt-8 max-w-lg text-sm leading-relaxed text-white/50">
-              Một ảnh chân dung, một câu mô tả. Nexus giữ nguyên khuôn mặt và phong cách
-              rồi dựng ra hàng trăm khung hình khác nhau.
+              Khai nhân vật và phong cách một lần, rồi chỉ cần tả từng cảnh. Nexus giữ
+              nguyên nhân vật qua hàng trăm khung hình khác nhau.
             </p>
           </Reveal>
         </section>
 
         <Marquee
-          text="AI BATCH GENERATION · GIỮ MẶT · GIỮ PHONG CÁCH ·"
+          text="AI BATCH GENERATION · GIỮ NHÂN VẬT · GIỮ PHONG CÁCH ·"
           className="border-y border-white/10 py-3 font-mono text-[11px] uppercase tracking-[0.3em] text-white/25"
         />
 

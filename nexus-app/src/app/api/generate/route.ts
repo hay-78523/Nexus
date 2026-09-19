@@ -107,10 +107,8 @@ export async function POST(request: Request) {
   if (!prompt) {
     return NextResponse.json({ error: 'Thiếu mô tả.' }, { status: 400 })
   }
-  if (!images.character) {
-    return NextResponse.json({ error: 'Thiếu ảnh nhân vật.' }, { status: 400 })
-  }
-
+  // Ảnh tham chiếu nay đều là tuỳ chọn. Phần lớn cảnh được tả hoàn toàn bằng
+  // chữ; ảnh chỉ dùng khi cần khoá một nhân vật đã dựng từ lượt trước.
   // Mỗi ô nhận một trong hai dạng: ảnh nhúng thẳng (data:image/...) do người
   // dùng vừa chọn, hoặc một đường dẫn https — thường là ảnh Fal.ai vừa sinh ra
   // ở lượt trước, dùng để nối tiếp cảnh.

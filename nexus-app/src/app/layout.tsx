@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "NEXUS — AI Batch Generation",
   description:
-    "Sinh ảnh AI hàng loạt, giữ nguyên khuôn mặt và phong cách chỉ từ một tấm ảnh mẫu.",
+    "Sinh ảnh AI hàng loạt, giữ nguyên nhân vật và phong cách qua hàng trăm cảnh.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
