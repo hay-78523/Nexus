@@ -131,16 +131,12 @@ export default async function DashboardPage() {
 
           {/* Module AI */}
           <Reveal delay={0.1} className="min-w-0">
+            {/* Không nhắc chế độ thử ở đây nữa. Dấu "Thử" trên từng ảnh mới là
+                chỗ cảnh báo đúng lúc — ngay trên thứ có thể bị nhầm là ảnh thật. */}
             <SectionLabel
               index="02"
               title="Module dựng ảnh"
-              note={
-                DEMO_MODE
-                  ? 'Chế độ thử · không tốn tiền'
-                  : process.env.FAL_KEY
-                    ? 'Fal.ai · đã kết nối'
-                    : 'Fal.ai · chưa kết nối'
-              }
+              note={process.env.FAL_KEY ? 'Fal.ai · đã kết nối' : 'Fal.ai · chưa kết nối'}
             />
             <div className="mt-8">
               {/* Danh sách model đọc từ biến môi trường ở phía máy chủ, để
