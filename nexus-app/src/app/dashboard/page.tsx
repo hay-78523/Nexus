@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { logout } from '@/app/auth/actions'
 import AIGenerator from '@/components/AIGenerator'
-import { allowedModels, DEFAULT_MODEL } from '@/lib/fal'
+import { allowedModels, DEFAULT_MODEL, DEMO_MODE } from '@/lib/fal'
 import Backdrop from '@/components/nx/Backdrop'
 import Marquee from '@/components/nx/Marquee'
 import Reveal from '@/components/nx/Reveal'
@@ -131,11 +131,21 @@ export default async function DashboardPage() {
 
           {/* Module AI */}
           <Reveal delay={0.1} className="min-w-0">
-            <SectionLabel index="02" title="Module dựng ảnh" note="Fal.ai · chưa kết nối" />
+            <SectionLabel
+              index="02"
+              title="Module dựng ảnh"
+              note={
+                DEMO_MODE
+                  ? 'Chế độ thử · không tốn tiền'
+                  : process.env.FAL_KEY
+                    ? 'Fal.ai · đã kết nối'
+                    : 'Fal.ai · chưa kết nối'
+              }
+            />
             <div className="mt-8">
               {/* Danh sách model đọc từ biến môi trường ở phía máy chủ, để
                   tên model không phải nhúng cứng vào mã trình duyệt. */}
-              <AIGenerator models={allowedModels()} defaultModel={DEFAULT_MODEL} />
+              <AIGenerator models={allowedModels()} defaultModel={DEFAULT_MODEL} demo={DEMO_MODE} />
             </div>
           </Reveal>
         </main>

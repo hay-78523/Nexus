@@ -44,9 +44,11 @@ function toBase64(file: File): Promise<string> {
 export default function AIGenerator({
   models,
   defaultModel,
+  demo = false,
 }: {
   models: string[]
   defaultModel: string
+  demo?: boolean
 }) {
   const [prompt, setPrompt] = useState('')
   const [slots, setSlots] = useState<Slots>(EMPTY_SLOTS)
@@ -197,6 +199,14 @@ export default function AIGenerator({
           </p>
         )}
 
+        {demo && (
+          <p className="border-l-2 border-amber-400 bg-amber-400/10 px-4 py-3 font-mono text-[11px] leading-relaxed text-amber-200">
+            <b>Chế độ thử.</b> Ảnh do một dịch vụ miễn phí sinh ra từ mô tả, không tốn
+            tiền. Nó <b>không nhìn ba ảnh tham chiếu</b>, nên đừng đánh giá chuyện giữ
+            khuôn mặt qua đây — chỉ để xem luồng chạy có thông không.
+          </p>
+        )}
+
         <button
           onClick={handleGenerate}
           disabled={isGenerating || !ready}
@@ -243,6 +253,7 @@ export default function AIGenerator({
                   url={url}
                   index={i + 1}
                   onContinue={(key) => continueFrom(url, key)}
+                  demo={demo}
                 />
               ))}
             </div>
@@ -328,10 +339,12 @@ function ResultTile({
   url,
   index,
   onContinue,
+  demo,
 }: {
   url: string
   index: number
   onContinue: (key: SlotKey) => void
+  demo: boolean
 }) {
   const [saving, setSaving] = useState(false)
 
@@ -385,6 +398,11 @@ function ResultTile({
       <span className="absolute left-2 top-2 bg-black/70 px-2 py-1 font-mono text-[10px] text-white/70">
         {String(index).padStart(2, '0')}
       </span>
+      {demo && (
+        <span className="absolute right-2 top-2 bg-amber-400 px-2 py-1 font-mono text-[9px] font-bold uppercase tracking-[0.1em] text-black">
+          Thử
+        </span>
+      )}
     </div>
   )
 }

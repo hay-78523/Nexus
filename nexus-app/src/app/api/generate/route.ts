@@ -9,6 +9,8 @@ import {
   MAX_NUM_IMAGES,
   MAX_TOTAL_CHARS,
   allowedModels,
+  DEMO_MODE,
+  demoImageUrls,
 } from '@/lib/fal'
 
 /**
@@ -72,8 +74,9 @@ export async function POST(request: Request) {
   }
 
   // --- 2. Khoá phải có sẵn ở phía máy chủ -------------------------------
+  // Chế độ thử không gọi Fal.ai nên không cần khoá.
   const falKey = process.env.FAL_KEY
-  if (!falKey) {
+  if (!falKey && !DEMO_MODE) {
     return NextResponse.json(
       { error: 'Máy chủ chưa cấu hình FAL_KEY. Thêm vào biến môi trường rồi triển khai lại.' },
       { status: 501 }
@@ -157,7 +160,18 @@ export async function POST(request: Request) {
   const numImages =
     Number.isFinite(rawNum) && rawNum >= 1 ? Math.min(Math.floor(rawNum), MAX_NUM_IMAGES) : 1
 
-  // --- 4. Dựng thân yêu cầu gửi sang Fal.ai -----------------------------
+  // --- 4. Chế độ thử: dừng ở đây, không gọi ra ngoài --------------------
+  //
+  // Đặt sau toàn bộ phần kiểm tra dữ liệu ở trên là có chủ ý: chế độ thử vẫn
+  // phải đi qua đúng những cửa ải mà bản thật đi qua — bắt đăng nhập, bắt có
+  // mô tả, bắt có ảnh nhân vật, chặn ảnh quá lớn, chặn model lạ. Nếu không thì
+  // thử xong vẫn không biết mấy lớp kiểm tra đó có chạy không.
+  if (DEMO_MODE) {
+    const urls = demoImageUrls(prompt, numImages)
+    return NextResponse.json({ imageUrls: urls, imageUrl: urls[0], model, demo: true })
+  }
+
+  // --- 5. Dựng thân yêu cầu gửi sang Fal.ai -----------------------------
   const payload: Record<string, unknown> = {
     prompt,
     [CHARACTER_FIELD]: images.character,
@@ -175,7 +189,7 @@ export async function POST(request: Request) {
     soLuong: NUM_IMAGES_FIELD || '(chưa cấu hình)',
   }
 
-  // --- 5. Gọi Fal.ai ----------------------------------------------------
+  // --- 6. Gọi Fal.ai ----------------------------------------------------
   try {
     const falResponse = await fetch(`https://fal.run/${model}`, {
       method: 'POST',
