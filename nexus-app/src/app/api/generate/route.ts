@@ -147,8 +147,16 @@ export async function POST(request: Request) {
   const requestedModel = str(body.model).trim()
   const models = allowedModels()
   if (requestedModel && !models.includes(requestedModel)) {
+    // Nguyên nhân hay gặp nhất không phải người dùng gửi bậy, mà là trang đang
+    // mở trong trình duyệt được dựng từ bản cũ — danh sách model nhúng vào
+    // trang lúc dựng, còn máy chủ thì đã đổi. Nói thẳng ra để khỏi đoán.
     return NextResponse.json(
-      { error: `Model không nằm trong danh sách được phép: ${requestedModel}` },
+      {
+        error:
+          `Model "${requestedModel}" không còn nằm trong danh sách được phép.\n\n` +
+          'Thường là do trang đang mở là bản cũ. Tải lại trang (Ctrl+Shift+R) rồi thử lại.\n\n' +
+          `Danh sách hiện tại: ${models.join(', ')}`,
+      },
       { status: 400 }
     )
   }
