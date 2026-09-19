@@ -12,7 +12,8 @@ ghi ở đây. **Chạy xong file nào thì cập nhật bảng này ngay.**
 |---|---|---|
 | `0001_profiles_rls.sql` | ❌ Không chạy | Đã bị `0002` thay thế. Đừng chạy. |
 | `0002_profiles_policy_reset.sql` | ✅ 16.09.2026 | Kết quả: 2 policy, is_admin có, trigger chặn nâng quyền có |
-| `0003_backfill_full_name.sql` | ⬜ Chưa | |
+| `0003_backfill_full_name.sql` | ⬜ Chưa | Bỏ qua được. Tên của Thịnh đã do `0004` điền; hồ sơ admin không có tên trong `raw_user_meta_data` để chép sang. Vẫn hữu ích cho tài khoản đăng ký qua trang web sau này. |
+| `0004_bao_dam_ho_so.sql` | ✅ 16.09.2026 | Kết quả: 2 tài khoản / 2 hồ sơ, trigger `on_auth_user_created` có, 1 admin. `admin@nexus.com` quyền admin, `thinh123@gmail.com` quyền user tên Thịnh. Hồ sơ admin vẫn chưa có tên. |
 
 Ngoài ra có một số câu SQL từng gõ tay thẳng vào SQL Editor, không qua file:
 thêm cột `email` vào `profiles`, chép email từ `auth.users`, và đặt
