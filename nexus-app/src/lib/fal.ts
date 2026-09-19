@@ -28,6 +28,22 @@ export const STYLE_FIELD = process.env.FAL_STYLE_FIELD ?? ''
 export const POSE_FIELD = process.env.FAL_POSE_FIELD ?? ''
 export const NUM_IMAGES_FIELD = process.env.FAL_NUM_IMAGES_FIELD ?? ''
 
+/**
+ * Một số model nhận ảnh tham chiếu dưới dạng MẢNG trong một trường duy nhất,
+ * không phải mỗi loại một trường riêng. Nano Banana là ví dụ: nó gom tới 14
+ * ảnh vào image_urls rồi tự hiểu vai trò từng tấm qua câu mô tả.
+ *
+ * Đặt FAL_IMAGE_ARRAY=1 thì mọi ảnh đang có được gộp thành một mảng và gửi
+ * vào đúng trường ghi ở FAL_IMAGE_FIELD. Lúc đó FAL_STYLE_FIELD và
+ * FAL_POSE_FIELD bị bỏ qua, vì không còn trường riêng cho từng loại.
+ *
+ * Ví dụ cấu hình cho Nano Banana:
+ *   FAL_MODEL=fal-ai/nano-banana-2/edit
+ *   FAL_IMAGE_FIELD=image_urls
+ *   FAL_IMAGE_ARRAY=1
+ */
+export const IMAGE_AS_ARRAY = process.env.FAL_IMAGE_ARRAY === '1'
+
 export const MAX_NUM_IMAGES = 10
 
 /**
