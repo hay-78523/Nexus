@@ -199,14 +199,6 @@ export default function AIGenerator({
           </p>
         )}
 
-        {demo && (
-          <p className="border-l-2 border-amber-400 bg-amber-400/10 px-4 py-3 font-mono text-[11px] leading-relaxed text-amber-200">
-            <b>Chế độ thử.</b> Ảnh do một dịch vụ miễn phí sinh ra từ mô tả, không tốn
-            tiền. Nó <b>không nhìn ba ảnh tham chiếu</b>, nên đừng đánh giá chuyện giữ
-            khuôn mặt qua đây — chỉ để xem luồng chạy có thông không.
-          </p>
-        )}
-
         <button
           onClick={handleGenerate}
           disabled={isGenerating || !ready}
@@ -347,6 +339,10 @@ function ResultTile({
   demo: boolean
 }) {
   const [saving, setSaving] = useState(false)
+  // Đường dẫn có về không có nghĩa là ảnh tải được: máy chủ ảnh có thể chậm,
+  // quá tải hoặc chặn. Không bắt trạng thái này thì người dùng nhìn thấy một ô
+  // đen trơn, không biết đang chờ hay đã hỏng.
+  const [state, setState] = useState<'dang-tai' | 'xong' | 'hong'>('dang-tai')
 
   const download = async () => {
     setSaving(true)
@@ -371,7 +367,40 @@ function ResultTile({
   return (
     <div className="group relative aspect-square bg-black">
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={url} alt={`Ảnh ${index}`} className="h-full w-full object-contain" />
+      <img
+        src={url}
+        alt={`Ảnh ${index}`}
+        onLoad={() => setState('xong')}
+        onError={() => setState('hong')}
+        className={`h-full w-full object-contain transition-opacity ${
+          state === 'xong' ? 'opacity-100' : 'opacity-0'
+        }`}
+      />
+
+      {state === 'dang-tai' && (
+        <p className="absolute inset-0 flex items-center justify-center font-mono text-[10px] uppercase tracking-[0.25em] text-white/30">
+          Đang tải ảnh…
+        </p>
+      )}
+
+      {state === 'hong' && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 px-4 text-center">
+          <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-red-400">
+            Không tải được ảnh
+          </p>
+          <p className="font-mono text-[10px] leading-relaxed text-white/35">
+            Máy chủ ảnh không trả về. Thử lại, hoặc mở thẳng đường dẫn.
+          </p>
+          <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="border border-white/30 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.1em] text-white/70 transition-colors hover:border-white hover:text-white"
+          >
+            Mở đường dẫn
+          </a>
+        </div>
+      )}
       <div className="absolute inset-x-2 bottom-2 flex flex-wrap justify-end gap-1 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
         {/* Nối tiếp cảnh: đưa chính tấm này vào ô tham chiếu cho lượt sau. Gửi
             đi dưới dạng đường dẫn nên không đụng trần kích thước. */}
