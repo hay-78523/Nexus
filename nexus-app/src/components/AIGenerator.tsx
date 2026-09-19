@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 /**
  * Ba loại ảnh tham chiếu theo mục 3 của bản mô tả chức năng.
@@ -68,6 +68,17 @@ export default function AIGenerator({
   const [isGenerating, setIsGenerating] = useState(false)
   const [results, setResults] = useState<string[]>([])
   const [error, setError] = useState<string | null>(null)
+
+  // Ô mô tả tự cao theo nội dung. Prompt cho phong cách này thường dài ba bốn
+  // trăm ký tự; nhốt trong một ô cố định thì phải cuộn trong lúc gõ, không thấy
+  // được toàn bộ câu mình đang viết.
+  const promptRef = useRef<HTMLTextAreaElement>(null)
+  useEffect(() => {
+    const el = promptRef.current
+    if (!el) return
+    el.style.height = 'auto'
+    el.style.height = `${Math.min(el.scrollHeight, 520)}px`
+  }, [prompt])
 
   const setSlot = (key: SlotKey, value: SlotValue | null) => {
     setSlots((prev) => {
@@ -169,35 +180,39 @@ export default function AIGenerator({
   }
 
   const ready = Boolean(prompt)
+  const soAnhDaChon = SLOTS.filter(({ key }) => slots[key]).length
 
   return (
-    <div className="grid grid-cols-1 gap-px overflow-hidden border border-white/10 bg-white/10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
+    <div className="grid grid-cols-1 gap-px overflow-hidden border border-white/10 bg-white/10 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)]">
       {/* ---------- CỘT NHẬP ---------- */}
       <div className="flex flex-col gap-8 bg-ink-panel p-6 md:p-8">
-        <Field index="01" label="Ảnh tham chiếu" note="Tuỳ chọn">
-          <div className="grid grid-cols-3 gap-3">
-            {SLOTS.map(({ key, label, note }) => (
-              <ImageSlot
-                key={key}
-                label={label}
-                note={note}
-                value={slots[key]}
-                onPick={(file) => pickFile(key, file)}
-              />
-            ))}
-          </div>
-        </Field>
-
-        <Field index="02" label="Mô tả" note="Cảnh">
+        {/* Mô tả lên đầu và chiếm chỗ lớn nhất: từ khi ảnh tham chiếu thành tuỳ
+            chọn, đây là thứ người dùng thao tác nhiều nhất trong mọi lượt chạy. */}
+        <Field index="01" label="Mô tả cảnh" note={`${prompt.length} ký tự`}>
           <textarea
+            ref={promptRef}
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
-            className="h-28 w-full resize-none border border-white/15 bg-black p-4 font-mono text-sm text-white transition-colors placeholder:text-white/25 focus:border-acid focus:outline-none"
-            placeholder="2D cartoon illustration, thick bold black outlines, flat colors, businesswoman walking through a door, rising arrow chart, no text"
+            onKeyDown={(e) => {
+              if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && ready && !isGenerating) {
+                handleGenerate()
+              }
+            }}
+            rows={8}
+            className="min-h-[200px] w-full resize-y border border-white/15 bg-black p-4 font-mono text-[13px] leading-relaxed text-white transition-colors placeholder:text-white/25 focus:border-acid focus:outline-none"
+            placeholder={
+              '2D cartoon illustration, thick bold black outlines, flat saturated colors,\n' +
+              'warm lighting, 16:9 wide shot, no text, no words, no letters —\n' +
+              'a businesswoman walking through an open door, rising arrow chart,\n' +
+              'stacks of cash and a briefcase on the left'
+            }
           />
+          <p className="font-mono text-[10px] leading-relaxed text-white/30">
+            Viết bằng tiếng Anh cho kết quả tốt hơn hẳn. Bấm Ctrl+Enter để chạy.
+          </p>
         </Field>
 
-        <Field index="03" label="Thiết lập" note="Model & số lượng">
+        <Field index="02" label="Thiết lập" note="Model & số lượng">
           <div className="flex flex-col gap-3 sm:flex-row">
             <select
               value={model}
@@ -226,10 +241,42 @@ export default function AIGenerator({
             </label>
           </div>
           <p className="font-mono text-[10px] leading-relaxed text-white/30">
-            Mỗi ảnh là một lần tính tiền. Ô phong cách và dáng chỉ được gửi đi khi máy chủ
-            đã biết tên trường tương ứng của model này.
+            Mỗi ảnh là một lần tính tiền.
           </p>
         </Field>
+
+        {/* Ảnh tham chiếu gập lại: tuỳ chọn, và phần lớn lượt chạy không dùng
+            tới. Để mở sẵn thì nó đẩy ô mô tả xuống dưới màn hình. */}
+        <details className="group">
+          <summary className="flex cursor-pointer items-baseline gap-3 list-none">
+            <span className="font-mono text-[10px] tracking-[0.3em] text-acid">03</span>
+            <span className="text-sm font-black uppercase tracking-[0.1em] text-white">
+              Ảnh tham chiếu
+            </span>
+            <span className="ml-auto font-mono text-[10px] uppercase tracking-[0.25em] text-white/30">
+              {soAnhDaChon > 0 ? `Đã chọn ${soAnhDaChon}` : 'Tuỳ chọn'}
+              <span className="ml-2 inline-block transition-transform group-open:rotate-90">›</span>
+            </span>
+          </summary>
+
+          <div className="mt-4 flex flex-col gap-3">
+            <div className="grid grid-cols-3 gap-3">
+              {SLOTS.map(({ key, label, note }) => (
+                <ImageSlot
+                  key={key}
+                  label={label}
+                  note={note}
+                  value={slots[key]}
+                  onPick={(file) => pickFile(key, file)}
+                />
+              ))}
+            </div>
+            <p className="font-mono text-[10px] leading-relaxed text-white/30">
+              Chỉ cần khi muốn khoá nhân vật cho giống nhau qua nhiều cảnh. Ô phong cách
+              và dáng chỉ được gửi đi khi máy chủ đã biết tên trường của model này.
+            </p>
+          </div>
+        </details>
 
         {error && (
           <p
