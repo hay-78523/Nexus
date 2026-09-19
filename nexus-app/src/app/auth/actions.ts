@@ -49,28 +49,6 @@ export async function signup(formData: FormData) {
   redirect('/dashboard')
 }
 
-export async function signInWithGoogle() {
-  const supabase = await createClient()
-
-  // Set the redirect URL to our auth callback route
-  // The callback route will handle exchanging the code for a session
-  const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: 'google',
-    options: {
-      redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/callback`,
-    },
-  })
-
-  if (error) {
-    redirect('/auth?error=' + error.message)
-  }
-
-  // Redirect to the OAuth provider URL
-  if (data.url) {
-    redirect(data.url)
-  }
-}
-
 export async function logout() {
   const supabase = await createClient()
   await supabase.auth.signOut()
