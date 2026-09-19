@@ -14,7 +14,20 @@ const SLOTS = [
 ] as const
 
 type SlotKey = (typeof SLOTS)[number]['key']
-type Slots = Record<SlotKey, { file: File; preview: string } | null>
+
+/**
+ * Một ô ảnh giữ một trong hai thứ: file người dùng vừa chọn, hoặc đường dẫn
+ * một ảnh Fal.ai đã sinh ra ở lượt trước. Dạng thứ hai là cách nối tiếp cảnh:
+ * ra được tấm ưng ý rồi thì lấy chính nó làm tham chiếu cho lượt sau.
+ *
+ * Dùng đường dẫn còn tránh được trần kích thước của Vercel, vì ảnh không phải
+ * đi kèm trong yêu cầu — Fal.ai tự đi lấy.
+ */
+type SlotValue =
+  | { kind: 'file'; file: File; preview: string }
+  | { kind: 'url'; url: string; preview: string }
+
+type Slots = Record<SlotKey, SlotValue | null>
 
 const EMPTY_SLOTS: Slots = { character: null, style: null, pose: null }
 
@@ -43,14 +56,23 @@ export default function AIGenerator({
   const [results, setResults] = useState<string[]>([])
   const [error, setError] = useState<string | null>(null)
 
-  const setSlot = (key: SlotKey, file: File | null) => {
+  const setSlot = (key: SlotKey, value: SlotValue | null) => {
     setSlots((prev) => {
-      // Thu hồi đường dẫn xem trước cũ, nếu không trình duyệt giữ nguyên file
-      // trong bộ nhớ cho tới khi tải lại trang.
+      // Chỉ thu hồi đường dẫn xem trước do chính mình tạo ra từ file; đường dẫn
+      // https của Fal.ai không phải của mình, thu hồi là lỗi.
       const old = prev[key]
-      if (old) URL.revokeObjectURL(old.preview)
-      return { ...prev, [key]: file ? { file, preview: URL.createObjectURL(file) } : null }
+      if (old?.kind === 'file') URL.revokeObjectURL(old.preview)
+      return { ...prev, [key]: value }
     })
+  }
+
+  const pickFile = (key: SlotKey, file: File | null) =>
+    setSlot(key, file ? { kind: 'file', file, preview: URL.createObjectURL(file) } : null)
+
+  /** Lấy một ảnh vừa sinh ra làm tham chiếu cho lượt kế tiếp. */
+  const continueFrom = (url: string, key: SlotKey) => {
+    setSlot(key, { kind: 'url', url, preview: url })
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   const handleGenerate = async () => {
@@ -67,7 +89,8 @@ export default function AIGenerator({
       const images: Record<string, string> = {}
       for (const { key } of SLOTS) {
         const slot = slots[key]
-        if (slot) images[key] = await toBase64(slot.file)
+        if (!slot) continue
+        images[key] = slot.kind === 'file' ? await toBase64(slot.file) : slot.url
       }
 
       const response = await fetch('/api/generate', {
@@ -115,8 +138,8 @@ export default function AIGenerator({
                 key={key}
                 label={label}
                 note={note}
-                preview={slots[key]?.preview ?? null}
-                onPick={(file) => setSlot(key, file)}
+                value={slots[key]}
+                onPick={(file) => pickFile(key, file)}
               />
             ))}
           </div>
@@ -215,7 +238,12 @@ export default function AIGenerator({
           ) : results.length > 0 ? (
             <div className="grid h-full w-full grid-cols-1 gap-px self-stretch overflow-y-auto bg-white/10 sm:grid-cols-2">
               {results.map((url, i) => (
-                <ResultTile key={url} url={url} index={i + 1} />
+                <ResultTile
+                  key={url}
+                  url={url}
+                  index={i + 1}
+                  onContinue={(key) => continueFrom(url, key)}
+                />
               ))}
             </div>
           ) : (
@@ -244,14 +272,15 @@ export default function AIGenerator({
 function ImageSlot({
   label,
   note,
-  preview,
+  value,
   onPick,
 }: {
   label: string
   note: string
-  preview: string | null
+  value: SlotValue | null
   onPick: (file: File | null) => void
 }) {
+  const preview = value?.preview ?? null
   return (
     <div className="flex flex-col gap-2">
       <div className="group relative aspect-square w-full overflow-hidden border border-dashed border-white/20 bg-black transition-colors hover:border-acid/60">
@@ -263,8 +292,15 @@ function ImageSlot({
           className="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0"
         />
         {preview ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={preview} alt={`Ảnh ${label}`} className="h-full w-full object-cover" />
+          <>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={preview} alt={`Ảnh ${label}`} className="h-full w-full object-cover" />
+            {value?.kind === 'url' && (
+              <span className="absolute left-1 top-1 z-20 bg-acid px-1.5 py-0.5 font-mono text-[9px] font-bold uppercase tracking-[0.1em] text-black">
+                Nối tiếp
+              </span>
+            )}
+          </>
         ) : (
           <div className="flex h-full items-center justify-center">
             <span className="text-3xl font-thin leading-none text-white/25 transition-colors group-hover:text-acid">
@@ -288,7 +324,15 @@ function ImageSlot({
 }
 
 /** Một ảnh kết quả, kèm nút tải về. */
-function ResultTile({ url, index }: { url: string; index: number }) {
+function ResultTile({
+  url,
+  index,
+  onContinue,
+}: {
+  url: string
+  index: number
+  onContinue: (key: SlotKey) => void
+}) {
   const [saving, setSaving] = useState(false)
 
   const download = async () => {
@@ -315,13 +359,29 @@ function ResultTile({ url, index }: { url: string; index: number }) {
     <div className="group relative aspect-square bg-black">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={url} alt={`Ảnh ${index}`} className="h-full w-full object-contain" />
-      <button
-        onClick={download}
-        disabled={saving}
-        className="absolute bottom-2 right-2 bg-acid px-3 py-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.15em] text-black opacity-0 transition-opacity group-hover:opacity-100 focus:opacity-100 disabled:opacity-50"
-      >
-        {saving ? '…' : 'Tải về'}
-      </button>
+      <div className="absolute inset-x-2 bottom-2 flex flex-wrap justify-end gap-1 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
+        {/* Nối tiếp cảnh: đưa chính tấm này vào ô tham chiếu cho lượt sau. Gửi
+            đi dưới dạng đường dẫn nên không đụng trần kích thước. */}
+        <button
+          onClick={() => onContinue('character')}
+          className="border border-acid bg-black/80 px-2 py-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.1em] text-acid transition-colors hover:bg-acid hover:text-black"
+        >
+          Nối tiếp
+        </button>
+        <button
+          onClick={() => onContinue('style')}
+          className="border border-white/30 bg-black/80 px-2 py-1.5 font-mono text-[10px] uppercase tracking-[0.1em] text-white/70 transition-colors hover:border-white hover:text-white"
+        >
+          Làm style
+        </button>
+        <button
+          onClick={download}
+          disabled={saving}
+          className="bg-acid px-2 py-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.1em] text-black disabled:opacity-50"
+        >
+          {saving ? '…' : 'Tải về'}
+        </button>
+      </div>
       <span className="absolute left-2 top-2 bg-black/70 px-2 py-1 font-mono text-[10px] text-white/70">
         {String(index).padStart(2, '0')}
       </span>

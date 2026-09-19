@@ -108,7 +108,28 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Thiếu ảnh nhân vật.' }, { status: 400 })
   }
 
-  const totalChars = images.character.length + images.style.length + images.pose.length
+  // Mỗi ô nhận một trong hai dạng: ảnh nhúng thẳng (data:image/...) do người
+  // dùng vừa chọn, hoặc một đường dẫn https — thường là ảnh Fal.ai vừa sinh ra
+  // ở lượt trước, dùng để nối tiếp cảnh.
+  //
+  // Chỉ nhận đúng hai dạng đó. Không để lọt một chuỗi tuỳ ý xuống Fal.ai, vì
+  // trường này đi thẳng vào yêu cầu gửi ra ngoài.
+  for (const [ten, giaTri] of Object.entries(images)) {
+    if (!giaTri) continue
+    if (!giaTri.startsWith('data:image/') && !giaTri.startsWith('https://')) {
+      return NextResponse.json(
+        { error: `Ảnh ${ten} không hợp lệ: phải là ảnh tải lên hoặc một đường dẫn https.` },
+        { status: 400 }
+      )
+    }
+  }
+
+  // Chỉ ảnh nhúng mới tính vào hạn mức; đường dẫn https thì Fal.ai tự đi lấy
+  // nên không chiếm dung lượng của yêu cầu. Đây cũng là lý do nối tiếp cảnh
+  // không bao giờ đụng trần kích thước.
+  const totalChars = Object.values(images)
+    .filter((v) => v.startsWith('data:'))
+    .reduce((sum, v) => sum + v.length, 0)
   if (totalChars > MAX_TOTAL_CHARS) {
     return NextResponse.json(
       {
